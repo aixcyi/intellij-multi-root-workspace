@@ -1,0 +1,20 @@
+# IDEs & AI
+/.idea/
+/.vscode/
+/.agents/
+/.claude/
+/skills-lock.json
+/*.code-workspace
+/*.md
+!/README.md
+!/CHANGELOG.md
+
+# Environment
+/.venv/
+/.gradle/
+/.intellijPlatform/
+
+# Caches & Buildings
+/out/
+/build/
+/zoo.*/
