@@ -13,10 +13,16 @@ dependencies {
     // IntelliJ 平台 Gradle 插件依赖
     // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
-        intellijIdea("2025.3.5")
+        webstorm("2025.3.5")
         testFramework(TestFrameworkType.Platform)
 
         // Add plugin dependencies for compilation here, for example:
         // bundledPlugin("com.intellij.java")
+    }
+}
+
+intellijPlatform {
+    pluginConfiguration {
+        description = file("src/main/resources/META-INF/pluginDescription.html").readText()
     }
 }
