@@ -15,13 +15,19 @@
     <!-- 插件依赖。https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.MyMessageBundle</resource-bundle>
+    <resource-bundle>messages.NavifoxMessageBundle</resource-bundle>
 
-    <!-- 插件能力。https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <!-- 扩展点位。https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow id="MyToolWindow"
-                    factoryClass="net.navifox.plugins.MyToolWindowFactory"
-                    icon="AllIcons.Toolwindows.ToolWindowPalette"/>
+        <projectViewPane implementation="net.navifox.plugins.workspace.MrWorkspaceViewPane" />
+        <projectConfigurable groupId="tools"
+                             instance="net.navifox.plugins.workspace.WorkspaceSettingsConfigurable"
+                             id="net.navifox.plugins.workspace.settings"
+                             key="settings.tools.MrWorkspaceView.title" />
+        <notificationGroup id="MultiRootWorkspaceView"
+                           displayType="BALLOON"
+                           bundle="messages.NavifoxMessageBundle"
+                           key="notification.group.multirootWorkspaceView" />
     </extensions>
 
 </idea-plugin>
