@@ -18,7 +18,7 @@ internal const val WORKSPACE_SUFFIX = ".code-workspace"
  */
 @Service(Service.Level.PROJECT)
 @State(name = "MultiRootWorkspaceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class WorkspaceSettings : PersistentStateComponent<WorkspaceSettings.State> {
+class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> {
 
     class State {
         var selectedWorkspaceFile: String? = null
@@ -34,8 +34,8 @@ class WorkspaceSettings : PersistentStateComponent<WorkspaceSettings.State> {
 }
 
 /** 项目级服务通过 Project.getService 获取(ServiceManager 已在 Java 层废弃)。 */
-internal fun getWorkspaceSettings(project: Project): WorkspaceSettings =
-    project.getService(WorkspaceSettings::class.java)
+internal fun getMrWorkspaceSettings(project: Project): MrWorkspaceSettings =
+    project.getService(MrWorkspaceSettings::class.java)
 
 /** 扫描项目根目录第一层的 *.code-workspace 文件(按文件名排序)。 */
 internal fun findWorkspaceFiles(project: Project): List<VirtualFile> {
@@ -54,7 +54,7 @@ internal fun findWorkspaceFiles(project: Project): List<VirtualFile> {
  */
 internal fun resolveWorkspaceFile(project: Project, files: List<VirtualFile>): VirtualFile? {
     if (files.isEmpty()) return null
-    val settings = getWorkspaceSettings(project)
+    val settings = getMrWorkspaceSettings(project)
     settings.state.selectedWorkspaceFile?.let { name ->
         files.firstOrNull { it.name == name }?.let { return it }
     }

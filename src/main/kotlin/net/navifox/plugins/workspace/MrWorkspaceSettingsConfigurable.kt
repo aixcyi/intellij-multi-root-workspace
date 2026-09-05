@@ -20,7 +20,7 @@ import javax.swing.JPanel
  * Settings → Tools 下的设置页:指定 Project 面板读取哪个 *.code-workspace 文件。
  * 下拉框中只显示去掉 .code-workspace 后缀的名称,并默认定位到当前正在使用的文件。
  */
-class WorkspaceSettingsConfigurable(private val project: Project) : SearchableConfigurable {
+class MrWorkspaceSettingsConfigurable(private val project: Project) : SearchableConfigurable {
 
     companion object {
         const val ID = "net.navifox.plugins.workspace.settings"
@@ -40,7 +40,7 @@ class WorkspaceSettingsConfigurable(private val project: Project) : SearchableCo
 
     override fun createComponent(): JComponent {
         val files = findWorkspaceFiles(project)
-        val stored = getWorkspaceSettings(project).state.selectedWorkspaceFile
+        val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
         val effective = resolveWorkspaceFile(project, files)
 
         val combo = ComboBox<String>()
@@ -115,7 +115,7 @@ class WorkspaceSettingsConfigurable(private val project: Project) : SearchableCo
     override fun isModified(): Boolean {
         val files = findWorkspaceFiles(project)
         val selected = fileCombo?.selectedItem as? String
-        val stored = getWorkspaceSettings(project).state.selectedWorkspaceFile
+        val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
         val effectiveWhenAuto = files.firstOrNull()?.name
         return if (stored == null) {
             selected != effectiveWhenAuto
@@ -126,14 +126,14 @@ class WorkspaceSettingsConfigurable(private val project: Project) : SearchableCo
 
     override fun apply() {
         val selected = fileCombo?.selectedItem as? String
-        getWorkspaceSettings(project).state.selectedWorkspaceFile = selected
-        WorkspacePanes.refresh(project)
+        getMrWorkspaceSettings(project).state.selectedWorkspaceFile = selected
+        MrWorkspacePanes.refresh(project)
     }
 
     override fun reset() {
         val combo = fileCombo ?: return
         val files = findWorkspaceFiles(project)
-        val stored = getWorkspaceSettings(project).state.selectedWorkspaceFile
+        val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
         val preselect = if (stored != null && files.any { it.name == stored }) stored else resolveWorkspaceFile(project, files)?.name
         combo.selectedItem = preselect
     }
@@ -141,5 +141,5 @@ class WorkspaceSettingsConfigurable(private val project: Project) : SearchableCo
 
 /** 供气泡动作打开本设置页(伴生对象只允许常量,故置于顶层)。 */
 internal fun openWorkspaceSettings(project: Project) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(project, WorkspaceSettingsConfigurable::class.java)
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, MrWorkspaceSettingsConfigurable::class.java)
 }

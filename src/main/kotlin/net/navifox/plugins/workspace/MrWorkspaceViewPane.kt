@@ -65,11 +65,11 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     override fun getWeight(): Int = 1
 
     override fun createComponent() = super.createComponent().also {
-        WorkspacePanes.register(this)
+        MrWorkspacePanes.register(this)
     }
 
     override fun dispose() {
-        WorkspacePanes.unregister(this)
+        MrWorkspacePanes.unregister(this)
         super.dispose()
     }
 
@@ -318,7 +318,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     /** 多个文件且未在设置中指定时自动取了第一个,弹一次右下角气泡并可跳转设置页。 */
     private fun notifyIfAutoPicked(files: List<VirtualFile>, chosen: VirtualFile) {
         if (files.size <= 1) return
-        if (getWorkspaceSettings(myProject).state.selectedWorkspaceFile != null) return
+        if (getMrWorkspaceSettings(myProject).state.selectedWorkspaceFile != null) return
         val key = files.joinToString("|") { it.name }
         if (autoPickNotifiedKey == key) return
         autoPickNotifiedKey = key
@@ -342,7 +342,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
 }
 
 /** 供设置页在 apply 后触发当前项目里所有已创建面板刷新。 */
-internal object WorkspacePanes {
+internal object MrWorkspacePanes {
     private val panes = CopyOnWriteArrayList<MrWorkspaceViewPane>()
 
     fun register(pane: MrWorkspaceViewPane) {

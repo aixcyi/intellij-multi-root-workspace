@@ -21,7 +21,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectViewPane implementation="net.navifox.plugins.workspace.MrWorkspaceViewPane" />
         <projectConfigurable groupId="tools"
-                             instance="net.navifox.plugins.workspace.WorkspaceSettingsConfigurable"
+                             instance="net.navifox.plugins.workspace.MrWorkspaceSettingsConfigurable"
                              id="net.navifox.plugins.workspace.settings"
                              key="settings.tools.MrWorkspaceView.title" />
         <notificationGroup id="MultiRootWorkspaceView"
