@@ -28,12 +28,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
+import com.intellij.ui.treeStructure.Tree
 import net.navifox.plugins.NavifoxMessageBundle
 import net.navifox.plugins.core.MrWorkspace
 import net.navifox.plugins.core.MrWorkspaceUnusableException
 import net.navifox.plugins.core.loadWorkspace
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
+import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultTreeModel
 
 /**
@@ -151,22 +153,12 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                 loadWorkspace(myProject, getMrWorkspaceSettings(myProject).state.selectedWorkspaceFile)
             } catch (e: MrWorkspaceUnusableException) {
                 LOG.warn("All *.code-workspace files are unusable: ${e.message}")
-                return listOf(
-                    MrWorkspaceMessageNode(
-                        settings,
-                        NavifoxMessageBundle.message("MrWorkspaceViewPane.unusable"),
-                        isError = true
-                    )
-                )
+                showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.unusable"))
+                return emptyList()
             }
             if (loaded == null) {
-                return listOf(
-                    MrWorkspaceMessageNode(
-                        settings,
-                        NavifoxMessageBundle.message("MrWorkspaceViewPane.empty"),
-                        isError = true
-                    )
-                )
+                showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.empty"))
+                return emptyList()
             }
             notifyIfAutoPicked(loaded.candidates, loaded.workspace.file)
             return folderNodes(settings, loaded.workspace)
@@ -229,17 +221,18 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         override fun contains(file: VirtualFile): Boolean = false
     }
 
-    /** 把解析好的文件夹列表转成树节点：空列表提示、目录缺失提示，其余委托给顶层文件夹节点。 */
+    /**
+     * 把解析好的文件夹列表转成树节点。
+     *
+     * 空工作区（没有声明 folders）时树没有子节点，由 [showEmptyText] 在树中央给出占位提示；
+     * 个别目录解析失败时仍以错误行呈现。
+     */
     private fun folderNodes(settings: ViewSettings, workspace: MrWorkspace): List<AbstractTreeNode<*>> {
         if (workspace.folders.isEmpty()) {
-            return listOf(
-                MrWorkspaceMessageNode(
-                    settings,
-                    NavifoxMessageBundle.message("MrWorkspaceViewPane.noFolders"),
-                    isError = false
-                )
-            )
+            showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.noFolders"))
+            return emptyList()
         }
+        showEmptyText(null)
         val psiManager = PsiManager.getInstance(myProject)
         return workspace.folders.mapIndexed { index, folder ->
             val directory = folder.directory
@@ -255,6 +248,24 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                     isError = true
                 )
             }
+        }
+    }
+
+    /**
+     * 树没有内容时，在面板中央显示一段占位文本（类似于“结构”“通知”等工具窗口的空态）。
+     *
+     * @param message 占位文本；传 null 表示清除。树一旦出现子节点，平台本身也不会绘制空文本。
+     */
+    private fun showEmptyText(message: String?) {
+        fun apply() {
+            if (myProject.isDisposed) return
+            val emptyText = (getTree() as? Tree)?.emptyText ?: return
+            if (message == null) emptyText.clear() else emptyText.setText(message)
+        }
+        if (SwingUtilities.isEventDispatchThread()) {
+            apply()
+        } else {
+            SwingUtilities.invokeLater { apply() }
         }
     }
 
