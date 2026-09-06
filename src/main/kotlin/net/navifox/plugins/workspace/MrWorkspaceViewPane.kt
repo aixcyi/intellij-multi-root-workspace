@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport
+import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.projectView.impl.ProjectTreeStructure
 import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import net.navifox.plugins.NavifoxMessageBundle
 import net.navifox.plugins.core.MrWorkspace
@@ -117,27 +117,17 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      */
     internal infix fun belongsTo(project: Project): Boolean = myProject === project
 
-    override fun createComparator(): Comparator<NodeDescriptor<*>> = Comparator { a, b ->
-        when {
-            // 按 `*.code-workspace` 文件中的 `folders` 数组成员定义顺序排序。
-            a is MrWorkspaceTopFolderNode && b is MrWorkspaceTopFolderNode -> a.ordinal - b.ordinal
-            // 其它按“项目”工具窗口同款排序。
-            else -> compareNodeForProjectView(a, b)
+    override fun createComparator(): Comparator<NodeDescriptor<*>> {
+        // 顶层文件夹之间保持 `folders` 数组顺序；其余比较（目录内部子节点、顶层提示行等）
+        // 交给平台比较器，使其实时响应“项目”工具窗口的“排序依据”菜单与文件夹置顶等设置。
+        val platformComparator = GroupByTypeComparator(myProject, ID)
+        return Comparator { a, b ->
+            if (a is MrWorkspaceTopFolderNode && b is MrWorkspaceTopFolderNode) {
+                a.ordinal - b.ordinal
+            } else {
+                platformComparator.compare(a, b)
+            }
         }
-    }
-
-    // TODO: 到时候要适配“项目”工具窗口菜单的“排序依据”菜单。
-    private fun compareNodeForProjectView(a: NodeDescriptor<*>, b: NodeDescriptor<*>): Int {
-        val aNode = a as? AbstractTreeNode<*>
-        val bNode = b as? AbstractTreeNode<*>
-        val aIsDir = aNode?.isDirectory() ?: false
-        val bIsDir = bNode?.isDirectory() ?: false
-        if (aIsDir != bIsDir) {
-            return if (aIsDir) -1 else 1
-        }
-        val aName = aNode?.presentation?.presentableText?.lowercase() ?: ""
-        val bName = bNode?.presentation?.presentableText?.lowercase() ?: ""
-        return aName.compareTo(bName)
     }
 
     /**
@@ -319,13 +309,3 @@ private var autoPickNotifiedKey: String? = null
 
 /** 全部候选 *.code-workspace 均不可用时的诊断日志。 */
 private val LOG = Logger.getInstance(MrWorkspaceViewPane::class.java)
-
-/**
- * 判断某个树节点是不是目录节点。
- */
-private fun AbstractTreeNode<*>.isDirectory(): Boolean = when (value) {
-    is PsiDirectory -> true
-    is PsiFile -> false
-    is VirtualFile -> (value as VirtualFile).isDirectory
-    else -> false
-}
