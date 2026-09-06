@@ -101,7 +101,11 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
 
     // 我记得是工具栏菜单
     override fun addToolbarActions(group: DefaultActionGroup) {
-        group.add(object : AnAction(AllIcons.Actions.Refresh) {
+        group.add(object : AnAction(
+            NavifoxMessageBundle.message("MrWorkspaceViewPane.refresh"),
+            NavifoxMessageBundle.message("MrWorkspaceViewPane.refresh.description"),
+            AllIcons.Actions.Refresh,
+        ) {
             override fun actionPerformed(e: AnActionEvent) {
                 updateFromRoot(true)
             }
