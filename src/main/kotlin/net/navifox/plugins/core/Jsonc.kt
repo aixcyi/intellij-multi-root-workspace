@@ -1,8 +1,8 @@
-package net.navifox.plugins.workspace
+package net.navifox.plugins.core
 
 /**
- * VS Code 的 *.code-workspace 实际是 JSONC:允许行注释与块注释,也常带尾逗号。
- * 先把内容规整成严格 JSON,再交给平台解析器,避免误报 "Invalid JSON"。
+ * VS Code 的 `*.code-workspace` 实际是 JSONC：允许行注释与块注释，也常带尾逗号。
+ * 先把内容规整成严格 JSON，再交给平台解析器，避免误报 `"Invalid JSON"`。
  */
 object Jsonc {
 

@@ -6,6 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBLabel
 import net.navifox.plugins.NavifoxMessageBundle
+import net.navifox.plugins.core.WORKSPACE_SUFFIX
+import net.navifox.plugins.core.findWorkspaceFiles
+import net.navifox.plugins.core.resolveWorkspaceFile
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -17,8 +20,8 @@ import javax.swing.JList
 import javax.swing.JPanel
 
 /**
- * Settings → Tools 下的设置页:指定 Project 面板读取哪个 *.code-workspace 文件。
- * 下拉框中只显示去掉 .code-workspace 后缀的名称,并默认定位到当前正在使用的文件。
+ * Settings → Tools 下的设置页：指定 Project 面板读取哪个 `*.code-workspace` 文件。
+ * 下拉框中只显示去掉 `.code-workspace` 后缀的名称，并默认定位到当前正在使用的文件。
  */
 class MrWorkspaceSettingsConfigurable(private val project: Project) : SearchableConfigurable {
 
@@ -41,13 +44,13 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     override fun createComponent(): JComponent {
         val files = findWorkspaceFiles(project)
         val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
-        val effective = resolveWorkspaceFile(project, files)
+        val effective = resolveWorkspaceFile(files, stored)
 
         val combo = ComboBox<String>()
         combo.isEditable = false
         files.forEach { combo.addItem(it.name) }
         if (files.isNotEmpty()) {
-            // 默认定位到正在使用的文件:手动指定过则用指定值,否则是自动选中的那个
+            // 默认定位到正在使用的文件：手动指定过则用指定值，否则是自动选中的那个
             val preselect = if (stored != null && files.any { it.name == stored }) stored else effective?.name
             combo.selectedItem = preselect
             combo.isEnabled = true
@@ -134,12 +137,12 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         val combo = fileCombo ?: return
         val files = findWorkspaceFiles(project)
         val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
-        val preselect = if (stored != null && files.any { it.name == stored }) stored else resolveWorkspaceFile(project, files)?.name
+        val preselect = if (stored != null && files.any { it.name == stored }) stored else resolveWorkspaceFile(files, stored)?.name
         combo.selectedItem = preselect
     }
 }
 
-/** 供气泡动作打开本设置页(伴生对象只允许常量,故置于顶层)。 */
+/** 供气泡动作打开本设置页（伴生对象只允许常量，故置于顶层）。 */
 internal fun openWorkspaceSettings(project: Project) {
     ShowSettingsUtil.getInstance().showSettingsDialog(project, MrWorkspaceSettingsConfigurable::class.java)
 }
