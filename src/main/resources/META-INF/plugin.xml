@@ -20,6 +20,7 @@
     <!-- 扩展点位。https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <projectViewPane implementation="net.navifox.plugins.workspace.MrWorkspaceViewPane" />
+        <selectInTarget implementation="net.navifox.plugins.workspace.MrWorkspaceSelectInTarget" />
         <projectConfigurable groupId="tools"
                              instance="net.navifox.plugins.workspace.MrWorkspaceSettingsConfigurable"
                              id="net.navifox.plugins.workspace.settings"
