@@ -7,6 +7,7 @@
 /*.code-workspace
 /*.md
 !/README.md
+!/README.*.md
 !/CHANGELOG.md
 
 # Environment
