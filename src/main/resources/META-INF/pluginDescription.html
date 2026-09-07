@@ -1,37 +1,37 @@
 <p>
-    Adds a dedicated tool window that provides a multi-root workspace view for IntelliJ-based IDEs.
+    A VS Code-like workspace view can be rendered inside
+    the “Project” (Project) tool window of any JetBrains IDE.
 </p>
-<p>
-    为基于 IntelliJ 的 IDE 提供一个专用工具窗口，以支持多根工作区视图。
-</p>
+<p>可以在“项目”（Project）工具窗口中呈现像 VS Code 那样的工作区视图，支持所有 JetBrains IDE。</p>
 <hr/>
 <h2>Features</h2>
 <ul>
     <li>
-        Displays a file tree with support for multiple root directories simultaneously.
+        Shows multiple folders at once, and lets their paths nest inside one another —
+        something the native <b>multi-workspace</b> feature does not allow.
     </li>
     <li>
-        Fully integrated with the IDE's file system,
-        providing standard context menu actions
-        (New, Copy, Paste, Delete, Refactor, etc.).
+        Uses VS Code <code>*.code-workspace</code> configuration files directly,
+        and lets you switch between them in Settings.
     </li>
-    <li>
-        Ideal for monorepo workflows, offering an intuitive visual separation of sub-projects.
-    </li>
+    <li>Provides an experience consistent with the native directory tree of JetBrains IDEs.</li>
+    <li>Supports multiple languages.</li>
 </ul>
 <p>
     <i>
-        This plugin is designed purely for file browsing and navigation,
-        complementing the standard Project view.
+        Only a single workspace is supported at a time,
+        yet its top-level folders may contain one another —
+        which traditional multi-workspace cannot achieve.
     </i>
 </p>
 <hr/>
 <h2>主要功能</h2>
 <ul>
-    <li>同时显示包含多个根目录的文件树。</li>
-    <li>与 IDE 文件系统完全集成，提供标准的上下文菜单操作（新建、复制、粘贴、删除、重构等）。</li>
-    <li>非常适合 monorepo 工作流，提供直观的子项目视觉分离。</li>
+    <li>同时展示多个文件夹，允许路径相互包含（原生的<b>多工作区</b>功能不允许这样子）。</li>
+    <li>直接依赖 VS Code 配置文件 <code>*.code-workspace</code> 并支持在“设置”中切换用哪个。</li>
+    <li>拥有与 JetBrains IDE 原生目录树一致的体验。</li>
+    <li>支持多种语言文字。</li>
 </ul>
 <p>
-    <i>此插件专用于文件浏览和导航，是对标准项目视图的补充。</i>
+    <i>目前仅适配单个工作区，但所有顶层文件夹可以互相包含，传统的多工作区无法实现这一点。</i>
 </p>
