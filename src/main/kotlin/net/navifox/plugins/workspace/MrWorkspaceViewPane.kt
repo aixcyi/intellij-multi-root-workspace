@@ -34,13 +34,30 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ui.UIUtil
 import net.navifox.plugins.NavifoxMessageBundle
 import net.navifox.plugins.core.MrWorkspace
 import net.navifox.plugins.core.MrWorkspaceUnusableException
 import net.navifox.plugins.core.loadWorkspace
 import net.navifox.plugins.core.resolveFolderPath
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.GridBagLayout
+import java.awt.LayoutManager
+import java.awt.event.ActionListener
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.Box
+import javax.swing.BoxLayout
 import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JLayeredPane
+import javax.swing.JPanel
+import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultTreeModel
 
@@ -66,6 +83,21 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         const val NOTIFICATION_GROUP_ID = "MrWorkspaceView"
     }
 
+    /** 包装组件（树 + 空态覆盖层）。平台每次切换回本面板都会再次调用 [createComponent]，必须缓存复用。 */
+    private var contentWrapper: JComponent? = null
+
+    /** 空态覆盖层：无可用配置时显示在树上方；树始终保留在组件树里以保证 `isShowing`（工具窗头部菜单等依赖它）。 */
+    private var noConfigOverlay: JPanel? = null
+
+    /** 空态创建按钮（用于显示期间设为窗口默认按钮以呈现“OK/确认”强调样式）。 */
+    private var configButton: JButton? = null
+
+    /** 设为默认按钮前保存的原默认按钮（切回树/面板隐藏时还原）。 */
+    private var previousDefaultButton: JButton? = null
+
+    /** 当前被我们占用默认按钮的根窗格。 */
+    private var activeRootPane: JRootPane? = null
+
     override fun getTitle(): String = NavifoxMessageBundle.message("MrWorkspaceViewPane.title")
 
     override fun getId(): String = ID
@@ -74,11 +106,138 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
 
     override fun getWeight(): Int = 1
 
-    override fun createComponent() = super.createComponent().also {
+    override fun createComponent(): JComponent {
+        val cached = contentWrapper
+        if (cached != null) {
+            // 平台切回面板会再次调用 createComponent：基类树组件已缓存、不会再自动加载，
+            // 这里主动触发一次“扫描 + 空态判定/重载”（否则要手点“刷新”才恢复提示）。
+            SwingUtilities.updateComponentTreeUI(cached)
+            SwingUtilities.invokeLater {
+                if (!myProject.isDisposed) {
+                    updateFromRoot(true)
+                }
+            }
+            return cached
+        }
+        val treeContent = super.createComponent()
         MrWorkspacePanes.register(this)
+
+        val overlay = createNoConfigPanel().apply { isVisible = false }
+        noConfigOverlay = overlay
+
+        // JLayeredPane 显式分层：树在 DEFAULT 层、空态覆盖层在 PALETTE 层，
+        // 保证覆盖层一定绘制在树之上（普通容器的兄弟叠放顺序不可靠）。
+        val wrapper = JLayeredPane().apply {
+            layout = FillOverlayLayout
+            add(treeContent, JLayeredPane.DEFAULT_LAYER)
+            add(overlay, JLayeredPane.PALETTE_LAYER)
+            // 显式分层并置顶；覆盖层还需“不透明 + 自绘背景”才会在顶层被真正绘制
+            setLayer(overlay, JLayeredPane.PALETTE_LAYER)
+            moveToFront(overlay)
+            addComponentListener(object : ComponentAdapter() {
+                override fun componentShown(e: ComponentEvent) {
+                    applyDefaultButtonIfVisible()
+                }
+
+                override fun componentHidden(e: ComponentEvent) {
+                    releaseDefaultButton()
+                }
+            })
+        }
+        contentWrapper = wrapper
+        return wrapper
+    }
+
+    /**
+     * 无可用配置（无文件 / 全部解析失败）时显示空态覆盖层（树仍保持可见/`isShowing`），
+     * 有可展示内容时隐藏。未构建完成前调用是安全的。
+     *
+     * 平台没有公开的“主按钮/强调按钮”样式开关：对话框“确认/OK”之所以是强调色，
+     * 是因为它是所在窗口的**默认按钮**（JRootPane.defaultButton，LAF 只给默认按钮画强调）。
+     * 因此空态显示期间把创建按钮临时设为窗口默认按钮（Enter 可直接触发创建，
+     * 语义上正是空态的“主操作”）；隐藏/面板切换走时还原。
+     */
+    private fun setNoConfigStateVisible(noConfig: Boolean) {
+        fun apply() {
+            if (myProject.isDisposed) return
+            val overlay = noConfigOverlay ?: return
+            overlay.isVisible = noConfig
+            if (noConfig) {
+                applyDefaultButtonIfVisible()
+            } else {
+                releaseDefaultButton()
+            }
+            val wrapper = contentWrapper
+            wrapper?.revalidate()
+            wrapper?.repaint()
+            if (noConfig) {
+                overlay.validate()
+                wrapper?.validate()
+            }
+        }
+        if (SwingUtilities.isEventDispatchThread()) {
+            apply()
+        } else {
+            SwingUtilities.invokeLater { apply() }
+        }
+    }
+
+    /** 空态覆盖层可见且已挂到窗口时，把创建按钮设为窗口默认按钮。 */
+    private fun applyDefaultButtonIfVisible() {
+        val overlay = noConfigOverlay ?: return
+        val button = configButton ?: return
+        if (!overlay.isVisible) return
+        val rootPane = SwingUtilities.getRootPane(overlay) ?: return
+        if (rootPane.defaultButton === button) return
+        previousDefaultButton = rootPane.defaultButton
+        activeRootPane = rootPane
+        rootPane.defaultButton = button
+        button.repaint()
+    }
+
+    /** 还原默认按钮（空态隐藏 / 面板不再显示 / 销毁时）。 */
+    private fun releaseDefaultButton() {
+        val root = activeRootPane ?: return
+        val button = configButton
+        activeRootPane = null
+        if (button != null && root.defaultButton === button) {
+            root.defaultButton = previousDefaultButton
+        }
+        previousDefaultButton = null
+    }
+
+    /**
+     * 空态覆盖层内容：标题与按钮各自水平居中（Swing BoxLayout 居中——DSL 行布局无法逐行居中）。
+     * 创建按钮点击走 [createWorkspaceConfig]（保存对话框先行），成功后刷新自动隐藏覆盖层。
+     */
+    private fun createNoConfigPanel(): JPanel {
+        val box = JPanel().apply {
+            isOpaque = false
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            add(JLabel(NavifoxMessageBundle.message("MrWorkspaceViewPane.noConfigState.title")).apply {
+                alignmentX = Component.CENTER_ALIGNMENT
+            })
+            add(Box.createVerticalStrut(12))
+            add(JButton(NavifoxMessageBundle.message("MrWorkspaceViewPane.noConfigState.create")).apply {
+                alignmentX = Component.CENTER_ALIGNMENT
+                addActionListener(ActionListener {
+                    if (!myProject.isDisposed) {
+                        createWorkspaceConfig(myProject)
+                    }
+                })
+                configButton = this
+            })
+        }
+        return JPanel(GridBagLayout()).apply {
+            // 覆盖层必须不透明（自绘背景）才会在 JLayeredPane 上层正常绘制
+            isOpaque = true
+            background = UIUtil.getTreeBackground()
+            add(box) // 默认约束即居中
+        }
     }
 
     override fun dispose() {
+        releaseDefaultButton()
         MrWorkspacePanes.unregister(this)
         super.dispose()
     }
@@ -160,14 +319,15 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
             } catch (e: MrWorkspaceUnusableException) {
                 LOG.warn("All *.code-workspace files are unusable: ${e.message}")
                 workspaceRootDirectories = emptyList()
-                showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.unusable"))
+                setNoConfigStateVisible(true)
                 return emptyList()
             }
             if (loaded == null) {
                 workspaceRootDirectories = emptyList()
-                showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.empty"))
+                setNoConfigStateVisible(true)
                 return emptyList()
             }
+            setNoConfigStateVisible(false)
             workspaceRootDirectories = loaded.workspace.folders.mapNotNull { it.directory }
             notifyIfAutoPicked(loaded.candidates, loaded.workspace.file)
             return folderNodes(settings, loaded.workspace)
@@ -483,6 +643,26 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                 }
             })
         Notifications.Bus.notify(notification, myProject)
+    }
+}
+
+/**
+ * 让所有子组件铺满容器并重叠（先添加的在底层）：树常驻底层、空态覆盖层在其上，
+ * 树因此始终处于显示/`isShowing` 状态，工具窗头部菜单等依赖目标组件可见性的平台行为不受影响。
+ */
+private object FillOverlayLayout : LayoutManager {
+    override fun addLayoutComponent(name: String?, comp: Component) = Unit
+
+    override fun removeLayoutComponent(comp: Component) = Unit
+
+    override fun preferredLayoutSize(parent: Container): Dimension = Dimension()
+
+    override fun minimumLayoutSize(parent: Container): Dimension = Dimension()
+
+    override fun layoutContainer(parent: Container) {
+        for (i in 0 until parent.componentCount) {
+            parent.getComponent(i).setBounds(0, 0, parent.width, parent.height)
+        }
     }
 }
 

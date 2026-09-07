@@ -4,24 +4,28 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.components.JBLabel
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import net.navifox.plugins.NavifoxMessageBundle
 import net.navifox.plugins.core.WORKSPACE_SUFFIX
 import net.navifox.plugins.core.findWorkspaceFiles
 import net.navifox.plugins.core.resolveWorkspaceFile
-import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Dimension
-import javax.swing.Box
-import javax.swing.BoxLayout
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JList
-import javax.swing.JPanel
 
 /**
  * Settings → Tools 下的设置页：指定 Project 面板读取哪个 `*.code-workspace` 文件。
- * 下拉框中只显示去掉 `.code-workspace` 后缀的名称，并默认定位到当前正在使用的文件。
+ *
+ * - 页面只有“文本标签 + 下拉框”，无多余说明文字；
+ * - 没有可用配置（项目根目录下无任何 `*.code-workspace` 文件）时下拉框不置灰，
+ *   自动选中一个“（无可用配置文件）”占位选项——该选项不会被保存（Apply 时写 `null`）；
+ * - 新建配置的入口在“多根工作区”工具窗口的空态里（[MrWorkspaceViewPane] 中的创建链接）；
+ * - 布局用平台 UI DSL，选中值与设置状态的读写沿用 `SearchableConfigurable` 生命周期
+ *   （`null` 表示自动检测，无法用简单的绑定表达，故不注册 DSL 回调）。
  */
 class MrWorkspaceSettingsConfigurable(private val project: Project) : SearchableConfigurable {
 
@@ -29,34 +33,17 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         const val ID = "net.navifox.plugins.workspace.settings"
     }
 
-    private fun displayNameText(): String =
-        NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.title")
-
-    private fun sourceLabel(): String =
-        NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.sourceLabel")
-
     private var fileCombo: ComboBox<String>? = null
 
     override fun getId(): String = ID
 
-    override fun getDisplayName(): String = displayNameText()
+    override fun getDisplayName(): String =
+        NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.title")
 
     override fun createComponent(): JComponent {
-        val files = findWorkspaceFiles(project)
-        val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
-        val effective = resolveWorkspaceFile(files, stored)
-
         val combo = ComboBox<String>()
         combo.isEditable = false
-        files.forEach { combo.addItem(it.name) }
-        if (files.isNotEmpty()) {
-            // 默认定位到正在使用的文件：手动指定过则用指定值，否则是自动选中的那个
-            val preselect = if (stored != null && files.any { it.name == stored }) stored else effective?.name
-            combo.selectedItem = preselect
-            combo.isEnabled = true
-        } else {
-            combo.isEnabled = false
-        }
+        rebindCombo(combo)
         combo.renderer = object : DefaultListCellRenderer() {
             override fun getListCellRendererComponent(
                 list: JList<*>,
@@ -65,58 +52,29 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
                 isSelected: Boolean,
                 cellHasFocus: Boolean,
             ): Component {
-                val comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) as JComponent
-                val text = (value as? String)?.removeSuffix(WORKSPACE_SUFFIX) ?: ""
-                comp.toolTipText = value as? String
-                (comp as? javax.swing.JLabel)?.text = text
+                val fullName = value as? String
+                val comp = super.getListCellRendererComponent(
+                    list, fullName?.removeSuffix(WORKSPACE_SUFFIX) ?: "", index, isSelected, cellHasFocus,
+                ) as JLabel
+                // 占位选项不是真实文件，不需要完整文件名提示
+                comp.toolTipText = fullName?.takeIf { it.endsWith(WORKSPACE_SUFFIX) }
                 return comp
             }
         }
         fileCombo = combo
 
-        val description = buildString {
-            append("<html>")
-            append(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.description"))
-            append("<br>")
-            if (files.isEmpty()) {
-                append("&nbsp;&nbsp;<font color='red'>")
-                append(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.noFile"))
-                append("</font><br>")
-            } else {
-                val currentName = effective?.name?.removeSuffix(WORKSPACE_SUFFIX)
-                append("&nbsp;&nbsp;")
-                append(NavifoxMessageBundle.message(
-                    "settings.tools.MrWorkspaceView.currentUsing",
-                    currentName ?: NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.none"),
-                ))
-                append("<br>")
+        return panel {
+            row(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.sourceLabel")) {
+                cell(combo)
+                    .align(AlignX.FILL)
+                    .resizableColumn()
             }
-            append("</html>")
         }
-
-        val label = JBLabel(description)
-        label.alignmentX = Component.LEFT_ALIGNMENT
-
-        val row = JPanel(BorderLayout(8, 0))
-        row.add(JBLabel(sourceLabel()), BorderLayout.WEST)
-        row.add(combo, BorderLayout.CENTER)
-
-        // 防止在设置面板里被纵向拉伸占满整页
-        combo.maximumSize = Dimension(Int.MAX_VALUE, combo.preferredSize.height)
-        row.maximumSize = Dimension(Int.MAX_VALUE, row.preferredSize.height)
-        row.alignmentX = Component.LEFT_ALIGNMENT
-
-        val panel = JPanel()
-        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
-        panel.add(label)
-        panel.add(Box.createVerticalStrut(8))
-        panel.add(row)
-        panel.add(Box.createVerticalGlue())
-        return panel
     }
 
     override fun isModified(): Boolean {
         val files = findWorkspaceFiles(project)
+        if (files.isEmpty()) return false // 只有占位选项，无可保存的修改
         val selected = fileCombo?.selectedItem as? String
         val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
         val effectiveWhenAuto = files.firstOrNull()?.name
@@ -128,17 +86,39 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     }
 
     override fun apply() {
-        val selected = fileCombo?.selectedItem as? String
+        // 占位选项或空选择不落盘（null = 自动检测）
+        val selected = (fileCombo?.selectedItem as? String)?.takeIf { it.endsWith(WORKSPACE_SUFFIX) }
         getMrWorkspaceSettings(project).state.selectedWorkspaceFile = selected
         MrWorkspacePanes.refresh(project)
     }
 
     override fun reset() {
         val combo = fileCombo ?: return
+        rebindCombo(combo)
+    }
+
+    /**
+     * 用当前扫描结果重建下拉项：没有可用配置时只放占位选项（不持久化、不置灰），
+     * 否则放全部文件名并预选（沿用设置值；设置值为空时自动选中按文件名序第一个）。
+     */
+    private fun rebindCombo(combo: ComboBox<String>) {
         val files = findWorkspaceFiles(project)
-        val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
-        val preselect = if (stored != null && files.any { it.name == stored }) stored else resolveWorkspaceFile(files, stored)?.name
-        combo.selectedItem = preselect
+        combo.removeAllItems()
+        if (files.isEmpty()) {
+            combo.addItem(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.noConfigOption"))
+            combo.selectedItem = combo.getItemAt(0)
+        } else {
+            files.forEach { combo.addItem(it.name) }
+            val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
+            combo.selectedItem = presetName(files, stored)
+        }
+    }
+
+    /** combo 的“重置值”：设置了且文件仍存在 → 设置值；否则回落到自动选中的那个。 */
+    private fun presetName(files: List<VirtualFile>, stored: String?): String? {
+        if (files.isEmpty()) return null
+        if (stored != null && files.any { it.name == stored }) return stored
+        return resolveWorkspaceFile(files, stored)?.name
     }
 }
 
