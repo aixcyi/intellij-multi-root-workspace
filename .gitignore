@@ -1,6 +1,7 @@
 # IDEs & AI
 /.idea/
 /.vscode/
+/.memory/
 /.agents/
 /.claude/
 /skills-lock.json
@@ -15,7 +16,7 @@
 /.gradle/
 /.intellijPlatform/
 
-# Caches & Buildings
+# Caches & Builds
 /out/
 /build/
 /zoo.*/
