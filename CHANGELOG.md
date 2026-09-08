@@ -1,14 +1,32 @@
-# Changelog 更新日志
-
-This file is written in both English and Chinese, following the conventions of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+# 更新日志 Changelog
 
 本文件使用中英双语编写，遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 中的约定。
 
+This file is written in both English and Chinese, following the conventions of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
 ## [Unreleased]
+
+## [0.1.1] - 2026-09-09
+
+### 新增
+
+- 新增插件图标，改编自[Catppuccin](https://github.com/catppuccin/vscode-icons/)。
+
+### Added
+
+- Add a dedicated plugin icon (adapted from the [Catppuccin](https://github.com/catppuccin/vscode-icons/) icon set) with separate light and dark variants for both IDE themes.
+
+### 修复
+
+- 解决插件更新日志提取不到英文部分的问题。
+
+### Fixed
+
+- Fix release-note extraction so English entries are no longer dropped: each language now lives in its own section, and both are picked up.
 
 ## [0.1.0] - 2026-09-08
 
-### Added
+### 新增
 
 - 在“项目”工具窗口新增“多根工作区”面板，渲染 VS Code 风格的多根工作区（`.code-workspace`，JSONC）。
 - 支持并列展示多个根目录并做内容根去重：同一物理文件只在所属最深的文件夹下出现一次。
@@ -19,6 +37,7 @@ This file is written in both English and Chinese, following the conventions of [
 - 存在多个配置文件并自动选用一个时气泡提醒一次。
 - 界面支持英文与简体中文（消息资源包）。
 
+### Added
 
 - Add a "Workspace (Multi-Root)" pane to the Project tool window that renders VS Code-style multi-root workspaces (`.code-workspace`, JSONC).
 - Support multiple root directories in parallel with deduplication: every physical file appears only once, under its deepest owning folder.
