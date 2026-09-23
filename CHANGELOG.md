@@ -6,6 +6,14 @@ This file is written in both English and Chinese, following the conventions of [
 
 ## [Unreleased]
 
+### 修复
+
+- 修复在“多根工作区”视图内使用原生“重构”（重命名、移动）以及新建、删除文件后目录树不自动刷新的问题：工作区根目录内的文件系统变化与配置文件的保存现在都会自动更新视图（350 毫秒防抖合并，效果等价于点刷新按钮）。
+
+### Fixed
+
+- Fix the tree not refreshing automatically after native refactoring (rename/move), file creation or deletion inside the "Workspace (Multi-Root)" view: file-system changes within workspace roots and configuration edits now refresh the view automatically (debounced by 350 ms, equivalent to pressing Refresh).
+
 ## [0.1.1] - 2026-09-09
 
 ### 新增

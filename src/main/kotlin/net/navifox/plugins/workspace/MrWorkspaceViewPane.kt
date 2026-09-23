@@ -28,7 +28,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.ui.LayeredIcon
@@ -38,6 +44,7 @@ import com.intellij.util.ui.UIUtil
 import net.navifox.plugins.NavifoxMessageBundle
 import net.navifox.plugins.core.MrWorkspace
 import net.navifox.plugins.core.MrWorkspaceUnusableException
+import net.navifox.plugins.core.WORKSPACE_SUFFIX
 import net.navifox.plugins.core.loadWorkspace
 import net.navifox.plugins.core.resolveFolderPath
 import java.awt.Component
@@ -59,6 +66,7 @@ import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
+import javax.swing.Timer
 import javax.swing.tree.DefaultTreeModel
 
 /**
@@ -98,6 +106,17 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     /** 当前被我们占用默认按钮的根窗格。 */
     private var activeRootPane: JRootPane? = null
 
+    /** VFS 订阅（`VirtualFileManager.VFS_CHANGES` 话题）：原生“重构”、新建/删除/移动/重命名等变化驱动自动刷新。 */
+    private var vfsBusConnection: MessageBusConnection? = null
+
+    /** 自动刷新防抖计时器：一批 VFS 事件只触发一次整树刷新，避免重构等批量操作反复重载。 */
+    private var autoRefreshTimer: Timer? = null
+
+    /** 项目根目录路径（正斜杠、去尾斜杠），用于识别“项目根第一层的 *.code-workspace”配置变化。 */
+    private val projectBaseDirPath: String? by lazy {
+        myProject.basePath?.replace('\\', '/')?.trimEnd('/')
+    }
+
     override fun getTitle(): String = NavifoxMessageBundle.message("MrWorkspaceViewPane.title")
 
     override fun getId(): String = ID
@@ -121,6 +140,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         }
         val treeContent = super.createComponent()
         MrWorkspacePanes.register(this)
+        installAutoRefresh()
 
         val overlay = createNoConfigPanel().apply { isVisible = false }
         noConfigOverlay = overlay
@@ -239,6 +259,10 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     override fun dispose() {
         releaseDefaultButton()
         MrWorkspacePanes.unregister(this)
+        autoRefreshTimer?.stop()
+        autoRefreshTimer = null
+        vfsBusConnection?.disconnect()
+        vfsBusConnection = null
         super.dispose()
     }
 
@@ -644,6 +668,102 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
             })
         Notifications.Bus.notify(notification, myProject)
     }
+
+    // —— 自动刷新：原生重构/新建/删除/移动/重命名等 VFS 变化让目录树跟上磁盘 ——
+
+    /**
+     * 订阅 VFS 变化。只在组件首次构建（面板被实际显示）时执行一次，[dispose] 时断开。
+     *
+     * 平台只为“树内容已加载的节点”做 PSI 级子树刷新，而本视图用自定义节点 + 手动缓存
+     * （[MrVisibleDirectoryNode]），原生动作后的变化经常到不了可见树；因此直接在 VFS 层
+     * 感知结构变化，变化落在当前工作区根目录内时合并触发一次整树重载（等价于点工具栏刷新）。
+     */
+    private fun installAutoRefresh() {
+        if (vfsBusConnection != null) return
+        val connection = myProject.messageBus.connect(myProject)
+        connection.subscribe(
+            VirtualFileManager.VFS_CHANGES,
+            object : BulkFileListener {
+                override fun after(events: List<VFileEvent>) {
+                    for (event in events) {
+                        when (event) {
+                            is VFilePropertyChangeEvent ->
+                                // 原生“重构 → 重命名”走 VFS 改名；只读/时间戳等属性变化不影响目录结构。
+                                if (event.propertyName == VirtualFile.PROP_NAME) {
+                                    onVfsStructureChange(event.file, event.file.parent)
+                                }
+                            is VFileContentChangeEvent ->
+                                // 普通文件内容保存不影响目录结构；仅 *.code-workspace 内容决定 folders。
+                                if (event.file.name.endsWith(WORKSPACE_SUFFIX)) {
+                                    onVfsStructureChange(event.file, event.file.parent)
+                                }
+                            else -> {
+                                // 新建/删除/移动/复制：以事件文件的路径是否落在工作区根内判断即可
+                                // （路径前缀匹配不依赖父对象是否有效）；创建事件额外带父目录，
+                                // 以便“直接在根目录内新建”也能命中。
+                                val parent = (event as? VFileCreateEvent)?.parent
+                                onVfsStructureChange(event.file, parent)
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        vfsBusConnection = connection
+    }
+
+    /**
+     * VFS 结构变化入口：受影响路径不在本视图展示范围内则忽略，否则防抖调度一次刷新。
+     *
+     * @param file 事件主对象（删除后可能已失效，仅用其路径判断）。
+     * @param parent 变化发生的父目录（删除/移动时更可靠，可为 null）。
+     */
+    private fun onVfsStructureChange(file: VirtualFile?, parent: VirtualFile?) {
+        if (myProject.isDisposed) return
+        if (!isAutoRefreshRelevant(file) && !isAutoRefreshRelevant(parent)) return
+        scheduleAutoRefresh()
+    }
+
+    /** 判断路径变化是否会影响当前“多根工作区”视图的展示内容。 */
+    private fun isAutoRefreshRelevant(file: VirtualFile?): Boolean {
+        if (file == null) return false
+        val path = file.path
+        // ① 落在某个当前工作区根目录内（含根目录自身）：目录树内容随之变化。
+        if (workspaceRootDirectories.any { root -> path == root.path || path.startsWith("${root.path}/") }) {
+            return true
+        }
+        // ② 项目根目录第一层的 *.code-workspace：新增/删除/改名/保存都会影响“无可用配置”
+        //    空态与（重新）加载结果。配置文件只出现在项目根第一层（见 core 的 findWorkspaceFiles）。
+        if (path.endsWith(WORKSPACE_SUFFIX)) {
+            val base = projectBaseDirPath ?: return false
+            val slash = path.lastIndexOf('/')
+            return slash > 0 && path.substring(0, slash) == base
+        }
+        return false
+    }
+
+    /** 合并调度一次自动刷新：连续事件不断重置计时器，停顿后才整树重载一次。 */
+    private fun scheduleAutoRefresh() {
+        if (myProject.isDisposed) return
+        val schedule = Runnable {
+            if (myProject.isDisposed) return@Runnable
+            val timer = autoRefreshTimer
+                ?: Timer(AUTO_REFRESH_DELAY_MS, ActionListener {
+                    if (!myProject.isDisposed) {
+                        updateFromRoot(true)
+                    }
+                }).apply {
+                    isRepeats = false
+                    autoRefreshTimer = this
+                }
+            timer.restart()
+        }
+        if (SwingUtilities.isEventDispatchThread()) {
+            schedule.run()
+        } else {
+            SwingUtilities.invokeLater(schedule)
+        }
+    }
 }
 
 /**
@@ -684,6 +804,9 @@ internal object MrWorkspacePanes {
         panes.forEach { if (it belongsTo project) it.updateFromRoot(true) }
     }
 }
+
+/** 自动刷新防抖窗口（毫秒）：期间内 VFS 事件合并为一次整树重载。 */
+private const val AUTO_REFRESH_DELAY_MS = 350
 
 /** 同一批文件只弹一次自动选择提醒，避免刷新时反复打扰。 */
 @Volatile
