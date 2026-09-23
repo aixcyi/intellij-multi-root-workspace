@@ -24,5 +24,11 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         description = file("src/main/resources/META-INF/pluginDescription.html").readText()
+
+        // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html#intellijPlatform-pluginConfiguration-ideaVersion
+        ideaVersion {
+            sinceBuild = "253"
+            untilBuild = "261.*"
+        }
     }
 }

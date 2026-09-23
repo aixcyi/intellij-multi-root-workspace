@@ -403,6 +403,16 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         }
 
         override fun contains(file: VirtualFile): Boolean = delegate.contains(file)
+
+        /**
+         * 定位（SelectIn／随处搜索选中文件夹／自动滚动）时平台可能以 [VirtualFile] 匹配节点：
+         * 平台目录节点重写了 `canRepresent` 来处理 VirtualFile，自定义包装节点必须一并委托，
+         * 否则只有沿用平台的 `PsiFileNode`（文件）能命中，文件夹节点永远匹配不上而无法定位。
+         */
+        override fun canRepresent(element: Any?): Boolean {
+            if (element is VirtualFile && element == value?.virtualFile) return true
+            return delegate.canRepresent(element)
+        }
     }
 
     /**
@@ -413,7 +423,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      * - 自身实现 [LeafState.Supplier]：可见子项为空（如“空骨架”目录）时返回 [LeafState.ALWAYS]，
      *   树不显示展开箭头但目录节点保留。
      *
-     * 排序与包含等钩子全部委托给内部 [PsiDirectoryNode]，行为与原生一致。
+     * 排序、包含与定位匹配（`canRepresent`）等钩子全部委托给内部 [PsiDirectoryNode]，行为与原生一致。
      */
     private class MrVisibleDirectoryNode(
         project: Project,
@@ -477,6 +487,12 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         override fun getTimeSortKey(): Comparable<*>? = delegate.getTimeSortKey()
 
         override fun contains(file: VirtualFile): Boolean = delegate.contains(file)
+
+        /** 与顶层节点同理：定位匹配必须委托内部 [PsiDirectoryNode] 才能被 VirtualFile 命中。 */
+        override fun canRepresent(element: Any?): Boolean {
+            if (element is VirtualFile && element == value?.virtualFile) return true
+            return delegate.canRepresent(element)
+        }
     }
 
     /**

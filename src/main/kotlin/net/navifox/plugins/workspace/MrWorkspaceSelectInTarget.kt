@@ -21,6 +21,11 @@ import net.navifox.plugins.NavifoxMessageBundle
  * 选中前会把 Project 工具窗口切到本面板（changeView），再交给平台（ProjectView.select → 面板
  * select）完成展开与选中；目标是否真的在树中由平台遍历按需加载后决定。树经过“内容根去重”后，
  * 同一文件只有唯一节点，因此无需处理重复命中的情况。
+ *
+ * 优先级：平台按 `SelectInTarget.getWeight()` **升序**取第一个 `canSelect` 命中的目标。原生“项目”入口
+ * （`ProjectViewSelectInGroupTarget`）用默认权重 `0f`，而双击 Shift 选中文件夹等自动定位走的就是这条
+ * 目标链，因此本实现取负权重排在其前：只要目标在工作区根目录内，就优先定位到“多根工作区”视图；
+ * 工作区之外的路径由本实现 [canSelect] 拒绝，仍回落到原生“项目”视图。
  */
 class MrWorkspaceSelectInTarget(private val project: Project) : SelectInTarget, DumbAware {
 
@@ -33,8 +38,8 @@ class MrWorkspaceSelectInTarget(private val project: Project) : SelectInTarget, 
     // 子菜单对应的 ID：必须是面板自身的 ID（平台要求 minorViewId 与 pane 的 id 一致）。
     override fun getMinorViewId(): String = MrWorkspaceViewPane.ID
 
-    // 与内置“项目”目标相同的权重，让本项与“项目”相邻展示。
-    override fun getWeight(): Float = 1f
+    // 负权重：排到原生“项目”入口（默认权重 0f）之前，让自动定位优先落到本视图，见类注释。
+    override fun getWeight(): Float = -1f
 
     private fun findPane(): MrWorkspaceViewPane? =
         ProjectView.getInstance(project).getProjectViewPaneById(MrWorkspaceViewPane.ID) as? MrWorkspaceViewPane
@@ -45,14 +50,19 @@ class MrWorkspaceSelectInTarget(private val project: Project) : SelectInTarget, 
     private fun isSameOrUnder(root: VirtualFile, file: VirtualFile): Boolean =
         root === file || VfsUtilCore.isAncestor(root, file, true)
 
+    /**
+     * 仅当本面板已存在、工作区根目录已加载、且 [context] 的文件位于某个根目录之下时可选。
+     *
+     * 这里不再“根目录未知就先放行”：本目标权重排在原生“项目”之前，若在面板尚未加载时放行，
+     * 会抢占原生定位（随后 [selectIn] 又因面板未就绪而无事发生），导致“选中后毫无反应”。
+     */
     override fun canSelect(context: SelectInContext): Boolean {
         if (project.isDisposed) return false
         val file = context.virtualFile
         if (!file.isValid) return false
-        // 根目录缓存为空说明面板尚未完成首次加载：此时不武断判定“不可选”，放行交给平台遍历，
-        // 由树加载结果决定文件是否真的在其中（加载由 select 的遍历按需触发）。
+        if (findPane() == null) return false
         val roots = currentRoots()
-        return roots.isEmpty() || roots.any { root -> isSameOrUnder(root, file) }
+        return roots.isNotEmpty() && roots.any { root -> isSameOrUnder(root, file) }
     }
 
     override fun selectIn(context: SelectInContext, requestFocus: Boolean) {

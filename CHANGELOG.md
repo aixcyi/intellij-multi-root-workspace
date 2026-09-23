@@ -1,18 +1,30 @@
 # 更新日志 Changelog
 
-本文件使用中英双语编写，遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 中的约定。
+项目版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)进行定义；本篇日志遵循
+[Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 所提出的约定，使用中英双语编写。
 
-This file is written in both English and Chinese, following the conventions of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+This file is written in both English and Chinese: project versions follow [Semantic Versioning](https://semver.org/),
+and this changelog follows the conventions of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
 ### 修复
 
 - 修复在“多根工作区”视图内使用原生“重构”（重命名、移动）以及新建、删除文件后目录树不自动刷新的问题：工作区根目录内的文件系统变化与配置文件的保存现在都会自动更新视图（350 毫秒防抖合并，效果等价于点刷新按钮）。
+- 修复在“随处搜索”（双击 Shift）等入口选中**文件夹**后无法定位到“多根工作区”视图的问题：自定义目录节点现在与原生目录节点一样支持按 `VirtualFile` 匹配。
 
 ### Fixed
 
 - Fix the tree not refreshing automatically after native refactoring (rename/move), file creation or deletion inside the "Workspace (Multi-Root)" view: file-system changes within workspace roots and configuration edits now refresh the view automatically (debounced by 350 ms, equivalent to pressing Refresh).
+- Fix navigation to a **folder** (for example picked in Search Everywhere) failing to locate it in the "Workspace (Multi-Root)" view: custom directory nodes now match by `VirtualFile`, exactly like native directory nodes.
+
+### 变更
+
+- 调整“在此视图中选择”（Alt＋F1）的目标优先级：目标位于工作区根目录内时优先定位到“多根工作区”视图（双击 Shift 选中文件夹等自动定位同样生效）；工作区之外的路径仍由原生“项目”视图定位。
+
+### Changed
+
+- Change the "Select In" (Alt+F1) target precedence: files and folders inside workspace roots are now located in the "Workspace (Multi-Root)" view first (automatic navigation, such as picking a folder in Search Everywhere, behaves the same way); targets outside the workspace still open in the native Project view.
 
 ## [0.1.1] - 2026-09-09
 
