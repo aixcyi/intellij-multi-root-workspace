@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import net.navifox.plugins.NavifoxMessageBundle
 import net.navifox.plugins.core.WORKSPACE_SUFFIX
@@ -13,6 +14,7 @@ import net.navifox.plugins.core.findWorkspaceFiles
 import net.navifox.plugins.core.resolveWorkspaceFile
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
@@ -34,6 +36,12 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     }
 
     private var fileCombo: ComboBox<String>? = null
+
+    /** 复选框组件；由本类自行做状态比对（不使用 DSL 绑定，见 [isModified]）。 */
+    private var hideWorkspaceDirCheckBox: JCheckBox? = null
+
+    /** 复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
+    private var hideWorkspaceDirResetValue: Boolean = false
 
     override fun getId(): String = ID
 
@@ -69,12 +77,23 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
                     .align(AlignX.FILL)
                     .resizableColumn()
             }
+            group(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.group.display")) {
+                row {
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.hideWorkspaceDirectory"))
+                        .also { hideWorkspaceDirCheckBox = it.component }
+                }.layout(RowLayout.PARENT_GRID)
+            }
         }
     }
 
     override fun isModified(): Boolean {
+        // 两个控件都自行比对：下拉框的选择值语义（`null` 表示自动检测）无法用绑定表达，
+        // 复选框若用绑定则由平台比对，会把“创建时已是勾选”的情况误判成已修改。
+        if ((hideWorkspaceDirCheckBox?.isSelected ?: hideWorkspaceDirResetValue) != hideWorkspaceDirResetValue) {
+            return true
+        }
         val files = findWorkspaceFiles(project)
-        if (files.isEmpty()) return false // 只有占位选项，无可保存的修改
+        if (files.isEmpty()) return false // 只有占位选项，无可保存的配置源修改
         val selected = fileCombo?.selectedItem as? String
         val stored = getMrWorkspaceSettings(project).state.selectedWorkspaceFile
         val effectiveWhenAuto = files.firstOrNull()?.name
@@ -88,13 +107,17 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     override fun apply() {
         // 占位选项或空选择不落盘（null = 自动检测）
         val selected = (fileCombo?.selectedItem as? String)?.takeIf { it.endsWith(WORKSPACE_SUFFIX) }
-        getMrWorkspaceSettings(project).state.selectedWorkspaceFile = selected
+        val settings = getMrWorkspaceSettings(project)
+        settings.state.selectedWorkspaceFile = selected
+        settings.state.hideWorkspaceDirectory = hideWorkspaceDirCheckBox?.isSelected ?: false
         MrWorkspacePanes.refresh(project)
     }
 
     override fun reset() {
-        val combo = fileCombo ?: return
-        rebindCombo(combo)
+        fileCombo?.let { rebindCombo(it) }
+        val stored = getMrWorkspaceSettings(project).state.hideWorkspaceDirectory
+        hideWorkspaceDirResetValue = stored
+        hideWorkspaceDirCheckBox?.isSelected = stored
     }
 
     /**

@@ -55,6 +55,7 @@ import java.awt.LayoutManager
 import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Box
 import javax.swing.BoxLayout
@@ -115,6 +116,17 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     /** 项目根目录路径（正斜杠、去尾斜杠），用于识别“项目根第一层的 *.code-workspace”配置变化。 */
     private val projectBaseDirPath: String? by lazy {
         myProject.basePath?.replace('\\', '/')?.trimEnd('/')
+    }
+
+    /**
+     * “当前工作区路径”（项目根目录）的绝对规范化路径键，供“自动隐藏当前工作区目录”比对。
+     *
+     * 先把 `basePath`（IDE 上报的路径格式不定，可能是 `C:\…` 或 `C:/…`）转成 [java.io.File]
+     * 再取绝对规范化路径，避免拿 `.`、`./` 这类写法直接做字符串比较。
+     */
+    private val projectBasePathKey: String? by lazy {
+        val base = myProject.basePath ?: return@lazy null
+        absolutePathKey(File(base))
     }
 
     override fun getTitle(): String = NavifoxMessageBundle.message("MrWorkspaceViewPane.title")
@@ -536,24 +548,40 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      *
      * - 空工作区（没有声明 folders）时树没有子节点，由 [showEmptyText] 在树中央给出占位提示。
      * - 内容根去重：同一物理文件只在其“最深所属”的 workspace folder 下展示 —— 任一顶层 folder
-     *   的子树中，凡目录等于另一个 folder 根（[rootFilter]），该整棵子树都不再渲染。
+     *   的子树中，凡目录等于另一个 folder 根（[otherRootPaths]），该整棵子树都不再渲染。
      * - 与 VS Code 一致：相同 path 的 folder 只保留首个；path 不存在或无法解析时仍显示顶层节点
      *   （[MrWorkspaceMissingFolderNode]，灰显 + 错误图标），而不是错误行。
+     * - 开启“自动隐藏当前工作区目录”时，解析后的绝对路径等于项目根目录（[projectBasePathKey]）的
+     *   folder 不进入可见列表，也不再充当 [rootFilter] 的去重根（其子目录因此会出现在包含它的其它根下）。
      */
     private fun folderNodes(settings: ViewSettings, workspace: MrWorkspace): List<AbstractTreeNode<*>> {
         if (workspace.folders.isEmpty()) {
             showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.noFolders"))
             return emptyList()
         }
-        showEmptyText(null)
         val psiManager = PsiManager.getInstance(myProject)
         // 相同目录（按解析后的真实路径比较，与 VS Code 一致）只保留首个声明。
         val workspacePath = workspace.file.path
         val seen = HashSet<String>()
         val uniqueFolders = workspace.folders.filter { folder -> seen.add(folderIdentityKey(workspacePath, folder.path)) }
-        // 所有工作区文件夹根目录的路径集合；作为子目录出现时视为“已被其它 folder 拥有”，整棵剪除。
-        val otherRootPaths = uniqueFolders.mapNotNull { it.directory?.path }.toSet()
-        return uniqueFolders.mapIndexed { index, folder ->
+        // “自动隐藏当前工作区目录”：按解析后的绝对规范化路径与项目根目录比对（不看 `.`／`./` 写法）。
+        val basePathKey = projectBasePathKey
+        val hideWorkspaceDirectory = getMrWorkspaceSettings(myProject).state.hideWorkspaceDirectory
+        val visibleFolders = uniqueFolders.mapNotNull { folder ->
+            val resolved = resolveFolderPath(workspacePath, folder.path)
+            val hidden = hideWorkspaceDirectory && basePathKey != null && resolved != null &&
+                absolutePathKey(resolved) == basePathKey
+            if (hidden) null else resolved to folder
+        }
+        if (visibleFolders.isEmpty()) {
+            showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.allFoldersHidden"))
+            return emptyList()
+        }
+        showEmptyText(null)
+        // 所有可见工作区文件夹根目录的路径集合；作为子目录出现时视为“已被其它 folder 拥有”，整棵剪除。
+        // 被隐藏的项目根不在其中——它的子目录解除剪除，会出现在包含它的其它根下。
+        val otherRootPaths = visibleFolders.mapNotNull { (resolved, _) -> resolved?.path }.toSet()
+        return visibleFolders.mapIndexed { index, (resolved, folder) ->
             val directory = folder.directory
             if (directory == null) {
                 // path 不存在：仍显示顶层文件夹（文件夹图标叠警示角标），标题用 name 或目录名回退。
@@ -603,11 +631,15 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     private fun folderIdentityKey(workspaceFilePath: String, path: String): String {
         val resolved = resolveFolderPath(workspaceFilePath, path)
         return if (resolved != null) {
-            resolved.toPath().normalize().toAbsolutePath().toString().replace('\\', '/')
+            absolutePathKey(resolved)
         } else {
             normalizeFolderPathKey(path)
         }
     }
+
+    /** 把 [File] 转成绝对规范化路径键（正斜杠、去 `..`／`.` 段），用于跨写法比较同一目录。 */
+    private fun absolutePathKey(file: File): String =
+        file.toPath().normalize().toAbsolutePath().toString().replace('\\', '/')
 
     /** 用于展示的路径文本：反斜杠归一、去掉前导 `./` 与尾部斜杠；根（`.` 或空）返回 null。 */
     private fun normalizedPathText(path: String): String? {

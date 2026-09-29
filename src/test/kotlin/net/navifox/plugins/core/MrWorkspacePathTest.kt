@@ -33,4 +33,17 @@ class MrWorkspacePathTest {
     fun workspaceFileWithoutParentCannotResolveRelative() {
         assertNull(resolveFolderPath("app.code-workspace", "frontend"))
     }
+
+    /**
+     * “当前工作区目录”（项目根）在 workspace 里可以用 `.`、`./`、`.` 加斜杠等多种写法声明，
+     * 归一化后必须都指向同一个真实目录，才谈得上“完全一致”的比对。
+     */
+    @Test
+    fun dotSpellingsResolveToWorkspaceDirectoryItself() {
+        val expected = File("C:/proj").canonicalPath
+        for (path in listOf(".", "./", ".//", "./.", "C:/proj/", "C:/proj")) {
+            val result = resolveFolderPath("C:/proj/app.code-workspace", path)
+            assertEquals("path=$path", expected, result?.canonicalPath)
+        }
+    }
 }

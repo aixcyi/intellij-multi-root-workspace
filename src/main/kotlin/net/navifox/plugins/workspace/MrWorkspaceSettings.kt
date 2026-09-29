@@ -19,6 +19,9 @@ class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> 
 
     class State {
         var selectedWorkspaceFile: String? = null
+
+        /** 自动隐藏与“当前工作区路径”（项目根目录）完全一致的顶层文件夹。默认不隐藏。 */
+        var hideWorkspaceDirectory: Boolean = false
     }
 
     private var state = State()
