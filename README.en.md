@@ -15,7 +15,7 @@ A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "P
 
 ## Compatibility
 
-- Works with IntelliJ Platform products 2025.3 (internal build 253.\*) and later.
+- Works with IntelliJ Platform products 2025.3 through 2026.2.\* (internal builds `253` to `262.*`).
 - Multi-workspace is not on the roadmap: at any one time the view presents the folders of **one** `.code-workspace` configuration only.
 
 ## Getting started

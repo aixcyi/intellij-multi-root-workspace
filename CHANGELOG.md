@@ -21,10 +21,12 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 ### 变更
 
 - 调整“在此视图中选择”（Alt＋F1）的目标优先级：目标位于工作区根目录内时优先定位到“多根工作区”视图（双击 Shift 选中文件夹等自动定位同样生效）；工作区之外的路径仍由原生“项目”视图定位。
+- 放宽兼容范围：由 2025.3 至 2026.1.*（内部构建 `253` 至 `261.*`）扩展为 2025.3 至 2026.2.*（内部构建 `253` 至 `262.*`）。
 
 ### Changed
 
 - Change the "Select In" (Alt+F1) target precedence: files and folders inside workspace roots are now located in the "Workspace (Multi-Root)" view first (automatic navigation, such as picking a folder in Search Everywhere, behaves the same way); targets outside the workspace still open in the native Project view.
+- Widen the compatibility range from 2025.3 through 2026.1.\* (internal builds `253` to `261.*`) to 2025.3 through 2026.2.\* (internal builds `253` to `262.*`).
 
 ## [0.1.1] - 2026-09-09
 
