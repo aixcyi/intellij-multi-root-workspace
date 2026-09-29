@@ -20,11 +20,13 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ### 修复
 
+- 修复 VFS 自动刷新订阅的生命周期：订阅改随面板释放，不再挂在项目上，避免面板反复重建时监听器越积越多。
 - 修复在“多根工作区”视图内使用原生“重构”（重命名、移动）以及新建、删除文件后目录树不自动刷新的问题：工作区根目录内的文件系统变化与配置文件的保存现在都会自动更新视图（350 毫秒防抖合并，效果等价于点刷新按钮）。
 - 修复在“随处搜索”（双击 Shift）等入口选中**文件夹**后无法定位到“多根工作区”视图的问题：自定义目录节点现在与原生目录节点一样支持按 `VirtualFile` 匹配。
 
 ### Fixed
 
+- Fix the lifetime of the VFS auto-refresh subscription: it is now disposed together with the view pane instead of the project, so listeners no longer pile up when the pane is recreated.
 - Fix the tree not refreshing automatically after native refactoring (rename/move), file creation or deletion inside the "Workspace (Multi-Root)" view: file-system changes within workspace roots and configuration edits now refresh the view automatically (debounced by 350 ms, equivalent to pressing Refresh).
 - Fix navigation to a **folder** (for example picked in Search Everywhere) failing to locate it in the "Workspace (Multi-Root)" view: custom directory nodes now match by `VirtualFile`, exactly like native directory nodes.
 

@@ -48,7 +48,9 @@ class MrWorkspaceSelectInTarget(private val project: Project) : SelectInTarget, 
 
     /** 判断 [file] 是否就是 [root] 或位于其下（用于限制“在此视图中选择”的范围）。 */
     private fun isSameOrUnder(root: VirtualFile, file: VirtualFile): Boolean =
-        root === file || VfsUtilCore.isAncestor(root, file, true)
+        // 用 `==` 而非 `===`：VirtualFile 实现 equals 并按文件系统条目比较，跨 VFS 刷新换掉的
+        // 新实例同样应当命中（祖先判断 VfsUtilCore.isAncestor 本身也是按文件系统条目比较的）。
+        root == file || VfsUtilCore.isAncestor(root, file, true)
 
     /**
      * 仅当本面板已存在、工作区根目录已加载、且 [context] 的文件位于某个根目录之下时可选。

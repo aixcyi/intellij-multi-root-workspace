@@ -4,6 +4,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RowLayout
@@ -64,8 +65,12 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
                 val comp = super.getListCellRendererComponent(
                     list, fullName?.removeSuffix(WORKSPACE_SUFFIX) ?: "", index, isSelected, cellHasFocus,
                 ) as JLabel
-                // 占位选项不是真实文件，不需要完整文件名提示
-                comp.toolTipText = fullName?.takeIf { it.endsWith(WORKSPACE_SUFFIX) }
+                // 占位选项不是真实文件，不需要完整文件名提示。Swing 会把以 `<html>` 开头的工具提示
+                // 当 HTML 解析，所以先转义再交给 setToolTipText（String 重载在 253 与 261 的发行版 jar
+                // 里都存在，而 setToolTipText(HtmlChunk) 重载在本项目可用的平台上并不存在）。
+                comp.toolTipText = fullName
+                    ?.takeIf { it.endsWith(WORKSPACE_SUFFIX) }
+                    ?.let(StringUtil::escapeXmlEntities)
                 return comp
             }
         }

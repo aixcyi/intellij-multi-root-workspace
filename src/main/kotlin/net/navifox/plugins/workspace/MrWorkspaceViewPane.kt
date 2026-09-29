@@ -52,7 +52,6 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.LayoutManager
-import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.io.File
@@ -252,11 +251,11 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
             add(Box.createVerticalStrut(12))
             add(JButton(NavifoxMessageBundle.message("MrWorkspaceViewPane.noConfigState.create")).apply {
                 alignmentX = Component.CENTER_ALIGNMENT
-                addActionListener(ActionListener {
+                addActionListener {
                     if (!myProject.isDisposed) {
                         createWorkspaceConfig(myProject)
                     }
-                })
+                }
                 configButton = this
             })
         }
@@ -379,7 +378,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
          * 平台“在此视图中选择”的路径遍历依赖此判断决定是否深入子树。
          */
         override fun contains(file: VirtualFile): Boolean =
-            workspaceRootDirectories.any { root -> root === file || VfsUtilCore.isAncestor(root, file, true) }
+            workspaceRootDirectories.any { root -> root == file || VfsUtilCore.isAncestor(root, file, true) }
     }
 
     /**
@@ -421,10 +420,8 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
          * 平台目录节点重写了 `canRepresent` 来处理 VirtualFile，自定义包装节点必须一并委托，
          * 否则只有沿用平台的 `PsiFileNode`（文件）能命中，文件夹节点永远匹配不上而无法定位。
          */
-        override fun canRepresent(element: Any?): Boolean {
-            if (element is VirtualFile && element == value?.virtualFile) return true
-            return delegate.canRepresent(element)
-        }
+        override fun canRepresent(element: Any?): Boolean =
+            (element is VirtualFile && element == value?.virtualFile) || delegate.canRepresent(element)
     }
 
     /**
@@ -501,10 +498,8 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         override fun contains(file: VirtualFile): Boolean = delegate.contains(file)
 
         /** 与顶层节点同理：定位匹配必须委托内部 [PsiDirectoryNode] 才能被 VirtualFile 命中。 */
-        override fun canRepresent(element: Any?): Boolean {
-            if (element is VirtualFile && element == value?.virtualFile) return true
-            return delegate.canRepresent(element)
-        }
+        override fun canRepresent(element: Any?): Boolean =
+            (element is VirtualFile && element == value?.virtualFile) || delegate.canRepresent(element)
     }
 
     /**
@@ -552,7 +547,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      * - 与 VS Code 一致：相同 path 的 folder 只保留首个；path 不存在或无法解析时仍显示顶层节点
      *   （[MrWorkspaceMissingFolderNode]，灰显 + 错误图标），而不是错误行。
      * - 开启“自动隐藏当前工作区目录”时，解析后的绝对路径等于项目根目录（[projectBasePathKey]）的
-     *   folder 不进入可见列表，也不再充当 [rootFilter] 的去重根（其子目录因此会出现在包含它的其它根下）。
+     *   folder 不进入可见列表，也不再充当 [otherRootPaths] 中去重根的成员（其子目录因此会出现在包含它的其它根下）。
      */
     private fun folderNodes(settings: ViewSettings, workspace: MrWorkspace): List<AbstractTreeNode<*>> {
         if (workspace.folders.isEmpty()) {
@@ -669,7 +664,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                 relative == ".." || relative.startsWith("../") -> directory.path.replace('\\', '/')
                 else -> relative
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             normalizedPathText(directory.path)
         }
     }
@@ -728,7 +723,9 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      */
     private fun installAutoRefresh() {
         if (vfsBusConnection != null) return
-        val connection = myProject.messageBus.connect(myProject)
+        // 订阅随本面板一起释放（AbstractProjectViewPane 实现 Disposable），而不是把 Project 当父
+        // 可处置对象：否则面板反复重建时每条连接都留到项目关闭，监听器会越积越多。
+        val connection = myProject.messageBus.connect(this)
         connection.subscribe(
             VirtualFileManager.VFS_CHANGES,
             object : BulkFileListener {
@@ -796,11 +793,11 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         val schedule = Runnable {
             if (myProject.isDisposed) return@Runnable
             val timer = autoRefreshTimer
-                ?: Timer(AUTO_REFRESH_DELAY_MS, ActionListener {
+                ?: Timer(AUTO_REFRESH_DELAY_MS) {
                     if (!myProject.isDisposed) {
                         updateFromRoot(true)
                     }
-                }).apply {
+                }.apply {
                     isRepeats = false
                     autoRefreshTimer = this
                 }
