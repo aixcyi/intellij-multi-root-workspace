@@ -293,8 +293,39 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
     @Volatile
     internal var workspaceRootDirectories: List<VirtualFile> = emptyList()
 
+    /**
+     * 最近一次构建的“文件夹”菜单选项（按 `folders` 顺序，只含路径能解析的文件夹）。
+     *
+     * 供 [MrWorkspaceFoldersMenu] 列出可选文件夹；面板还没构建出树时为空列表。
+     */
+    @Volatile
+    private var actionOrder: List<MrFolderLeaf> = emptyList()
+
+    /** “文件夹”菜单的可选项（面板尚未构建时为空列表）。 */
+    internal fun getFolderMenuLeaves(): List<MrFolderLeaf> = actionOrder
+
+    /** 当前**实际渲染**的顶层文件夹选择键（供菜单标注“显示所有”的当前状态）。 */
+    internal fun getVisibleFolderKeys(): Set<String> = getMrWorkspaceFolderFilter(myProject).visibleFolderKeys
+
+    /** 本面板所属项目（[MrWorkspaceFoldersMenuAction] 等外部入口需要用它来定位面板与刷新）。 */
+    internal fun project(): Project = myProject
+
+    /**
+     * 按选择键定位并展开顶层文件夹（“文件夹”菜单选中单项后调用）。
+     *
+     * 走平台自己的定位链路（[selectWithCallback] ＋ `VirtualFile`）：树会在必要时展开沿途节点、滚动到该行并选中它。
+     * 选择键对应的目录已被隐藏或消失时静默跳过（面板已经退回“显示所有”）。
+     */
+    internal fun expandTopFolder(folderKey: String) {
+        if (myProject.isDisposed) return
+        val directory = actionOrder.firstOrNull { it.key == folderKey }?.directory ?: return
+        selectWithCallback(directory, directory, false)
+    }
+
     // 我记得是工具栏菜单
     override fun addToolbarActions(group: DefaultActionGroup) {
+        // “文件夹”子菜单排在“刷新”前面：展开后选一个顶层文件夹只看它，或选“显示所有文件夹”恢复。
+        group.add(MrWorkspaceFoldersMenuAction())
         group.add(object : AnAction(
             NavifoxMessageBundle.message("MrWorkspacePane.refresh"),
             NavifoxMessageBundle.message("MrWorkspacePane.refresh.description"),
@@ -355,11 +386,13 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
             } catch (e: MrWorkspaceUnusableException) {
                 LOG.warn("All *.code-workspace files are unusable: ${e.message}")
                 workspaceRootDirectories = emptyList()
+                getMrWorkspaceFolderFilter(myProject).setVisibleKeys(emptySet())
                 setNoConfigStateVisible(true)
                 return emptyList()
             }
             if (loaded == null) {
                 workspaceRootDirectories = emptyList()
+                getMrWorkspaceFolderFilter(myProject).setVisibleKeys(emptySet())
                 setNoConfigStateVisible(true)
                 return emptyList()
             }
@@ -368,7 +401,35 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
             val folders = effectiveFolders(loaded.workspace.file.path, loaded.workspace.folders)
             workspaceRootDirectories = folders.mapNotNull { it.directory }
             notifyIfAutoPicked(loaded.candidates, loaded.workspace.file)
-            return folderNodes(settings, loaded.workspace.file.path, folders)
+            // “文件夹”菜单（Alt＋F2）的可选项：路径无法解析的 folder 没有可比较的目录身份，不进菜单。
+            actionOrder = folders.map { folderLeaf(loaded.workspace.file.path, it) }.filter { it.resolved != null }            // 可展示的顶层文件夹（含“自动隐藏当前工作区目录”与去重）：整棵树的唯一真相。
+            val canonical = visibleFolderLeaves(loaded.workspace.file.path, folders)
+            val filter = getMrWorkspaceFolderFilter(myProject)
+            filter.setVisibleKeys(canonical.map { it.key }.toSet())
+            if (canonical.isEmpty()) {
+                // 空工作区，或所有 folder 都被“自动隐藏当前工作区目录”隐藏。
+                showEmptyText(
+                    if (folders.isEmpty()) {
+                        NavifoxMessageBundle.message("MrWorkspacePane.noFolders")
+                    } else {
+                        NavifoxMessageBundle.message("MrWorkspacePane.allFoldersHidden")
+                    }
+                )
+                return emptyList()
+            }
+            // 过滤（“文件夹”菜单选中一个）在**已渲染**的文件夹上生效；目标文件夹已被设置隐藏时自动退回“显示所有”。
+            val selectedKey = filter.selectedFolderKey
+            val matchIndex = canonical.indexOfFirst { it.key == selectedKey }
+            val visible = if (matchIndex < 0) canonical else listOf(canonical[matchIndex])
+            showEmptyText(null)
+            // 过滤到单个文件夹时**解除内容根去重**：该文件夹的整棵子树都可见，不会留下被剪空的骨架目录。
+            val filtering = visible.size == 1 && canonical.size > 1
+            val pruningRoots = if (filtering) {
+                emptySet()
+            } else {
+                visible.mapNotNull { it.resolved?.let(::folderSelectionKeyOf) }.toSet()
+            }
+            return folderNodes(settings, visible, pruningRoots)
         }
 
         override fun update(presentation: PresentationData) {
@@ -385,6 +446,23 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
     }
 
     /**
+     * 顶层文件夹的全部展示信息；同时充当“文件夹”菜单（Alt＋F2）里的一项。
+     *
+     * @param key 选择键（[folderSelectionKeyOf]，正斜杠绝对规范化路径）：既是菜单项的标识，也是过滤依据。
+     * @param resolved 解析后的真实路径（`File`）；path 指向的目录不存在或无法解析时为空。
+     * @param directory 解析后的 [VirtualFile]；没有解析或 VFS 里找不到时为空（树里显示警示节点）。
+     * @param displayName 显示名：优先 `folders[].name`，否则目录名。
+     * @param locationText 名称后方的灰色路径文本（或“当前工作区”标记）；按“不显示文件夹所在路径”设置可以为空。
+     */
+    internal class MrFolderLeaf(
+        val key: String,
+        val resolved: File?,
+        val directory: VirtualFile?,
+        val displayName: String,
+        val locationText: String?,
+    )
+
+    /**
      * [MrWorkspacePane] 组件 顶层文件夹节点。
      *
      * - 显示 `*.code-workspace` 文件中的 `folders[].name`，如果没有则提取 `folders[].path` 的目录名称；
@@ -396,8 +474,8 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         project: Project,
         directory: PsiDirectory,
         settings: ViewSettings,
-        private val displayName: String,
-        private val locationText: String?,
+        private val leaf: MrFolderLeaf,
+        /** 子目录中要整棵剪除的“已被其它顶层文件夹拥有”的路径集合；过滤到单个文件夹时为空集（解除去重）。 */
         private val otherRootPaths: Set<String>,
         val ordinal: Int,
     ) : ProjectViewNode<PsiDirectory>(project, directory, settings) {
@@ -411,12 +489,11 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
 
         override fun update(presentation: PresentationData) {
             presentation.setIcon(AllIcons.Nodes.Folder)
-            presentation.setPresentableText(displayName)
-            if (locationText != null) {
-                presentation.setLocationString(locationText)
+            presentation.setPresentableText(leaf.displayName)
+            if (leaf.locationText != null) {
+                presentation.setLocationString(leaf.locationText)
             }
         }
-
         override fun contains(file: VirtualFile): Boolean = delegate.contains(file)
 
         /**
@@ -564,32 +641,14 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
     }
 
     /**
-     * 把解析好的文件夹列表转成树节点。
+     * 当前**实际渲染**的顶层文件夹（“自动隐藏当前工作区目录”“相同 path 只保留首个”之后的可见集合）。
      *
-     * - 空工作区（没有声明 folders，且“强制显示当前工作区目录”未勾选）时树没有子节点，
-     *   由 [showEmptyText] 在树中央给出占位提示。
-     * - 内容根去重：同一物理文件只在其“最深所属”的 workspace folder 下展示 —— 任一顶层 folder
-     *   的子树中，凡目录等于另一个 folder 根（[otherRootPaths]），该整棵子树都不再渲染。
-     * - 与 VS Code 一致：相同 path 的 folder 只保留首个；path 不存在或无法解析时仍显示顶层节点
-     *   （[MrWorkspaceMissingFolderNode]，灰显 + 错误图标），而不是错误行。
-     * - 开启“自动隐藏当前工作区目录”时，解析后的绝对路径等于项目根目录（[projectBasePathKey]）的
-     *   folder 不进入可见列表，也不再充当 [otherRootPaths] 中去重根的成员（其子目录因此会出现在包含它的其它根下）。
-     * - [effectiveFolders] 可能已在尾部补上“当前工作区目录”，它与显式声明的条目走同一套去重、渲染与定位路径。
+     * 树与“文件夹”菜单（Alt＋F2）都以这份列表为准，因此二者永远一致。
+     * 路径无法解析的 folder 保留在列表中（树里仍显示警示节点），但它不进“文件夹”菜单——
+     * 见 [folderLeaf] 与 [MrWorkspaceFoldersMenu]。
      */
-    private fun folderNodes(
-        settings: ViewSettings,
-        workspacePath: String,
-        folders: List<MrFolder>,
-    ): List<AbstractTreeNode<*>> {
-        if (folders.isEmpty()) {
-            showEmptyText(NavifoxMessageBundle.message("MrWorkspacePane.noFolders"))
-            return emptyList()
-        }
-        val psiManager = PsiManager.getInstance(myProject)
-        // “不显示文件夹所在路径”：关掉时不给节点传路径文本（节点 update 里据此不设置 location）；
-        // “当前工作区”标记占的是同一个位置，同样受它控制。
+    private fun visibleFolderLeaves(workspacePath: String, folders: List<MrFolder>): List<MrFolderLeaf> {
         val settingsState = getMrWorkspaceSettings(myProject).state
-        val showFolderPath = settingsState.showFolderPath
         // 相同目录（按解析后的真实路径比较，与 VS Code 一致）只保留首个声明。
         val seen = HashSet<String>()
         val uniqueFolders = folders.filter { folder -> seen.add(folderIdentityKey(workspacePath, folder.path)) }
@@ -599,67 +658,93 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         // 按“强制显示”优先——此时不隐藏，必要的话还会补上缺失的当前工作区目录。
         val hideWorkspaceDirectory =
             settingsState.hideWorkspaceDirectory && !settingsState.forceShowWorkspaceDirectory
-        val visibleFolders = uniqueFolders.mapNotNull { folder ->
+        return uniqueFolders.mapNotNull { folder ->
             val resolved = resolveFolderPath(workspacePath, folder.path)
             val hidden = hideWorkspaceDirectory && basePathKey != null && resolved != null &&
                 absolutePathKey(resolved) == basePathKey
-            if (hidden) null else resolved to folder
+            if (hidden) null else folderLeaf(workspacePath, folder, resolved)
         }
-        if (visibleFolders.isEmpty()) {
-            showEmptyText(NavifoxMessageBundle.message("MrWorkspacePane.allFoldersHidden"))
-            return emptyList()
+    }
+
+    /**
+     * 把单个 folder 整理成展示信息；“文件夹”菜单用同一份数据，因此菜单标题、顺序与树完全一致。
+     *
+     * @param resolved 已解析的真实路径；为 null 时会就地再解析一次（[visibleFolderLeaves] 已解析过就直接传结果）。
+     */
+    private fun folderLeaf(
+        workspacePath: String,
+        folder: MrFolder,
+        resolved: File? = resolveFolderPath(workspacePath, folder.path),
+    ): MrFolderLeaf {
+        // “不显示文件夹所在路径”：关掉时不给节点传路径文本（节点 update 里据此不设置 location）；
+        // “当前工作区”标记占的是同一个位置，同样受它控制。
+        val showFolderPath = getMrWorkspaceSettings(myProject).state.showFolderPath
+        val directory = folder.directory
+        if (directory == null) {
+            // path 不存在或无法解析：仍显示顶层文件夹（文件夹图标叠警示角标），标题用 name 或目录名回退。
+            // 它没有可比较的目录身份，因此不进“文件夹”菜单（[MrWorkspaceFoldersMenu] 会跳过 [resolved] 为空的项）。
+            return MrFolderLeaf(
+                key = resolved?.let(::folderSelectionKeyOf) ?: normalizeFolderPathKey(folder.path),
+                resolved = resolved,
+                directory = null,
+                displayName = folder.name ?: folderPathBasename(folder.path),
+                locationText = normalizedPathText(folder.path).takeIf { showFolderPath },
+            )
         }
-        showEmptyText(null)
-        // 所有可见工作区文件夹根目录的路径集合；作为子目录出现时视为“已被其它 folder 拥有”，整棵剪除。
-        // 键必须是 [absolutePathKey] 生成的“正斜杠绝对路径”，才能与 VirtualFile 的 path 比较（见该函数注释）。
-        // 被隐藏的项目根不在其中——它的子目录解除剪除，会出现在包含它的其它根下；而“强制显示”补出来的
-        // 项目根与显式声明一样在这里，因此**同样参与剪枝**：各顶层文件夹的展示内容互不重叠。
-        val otherRootPaths = visibleFolders.mapNotNull { (resolved, _) -> resolved?.let(::absolutePathKey) }.toSet()
-        return visibleFolders.mapIndexed { index, (resolved, folder) ->
-            val directory = folder.directory
-            if (directory == null) {
-                // path 不存在：仍显示顶层文件夹（文件夹图标叠警示角标），标题用 name 或目录名回退。
+        // 与“当前工作区路径”（项目根）重合的那个 folder 没有相对路径可显示，改用“当前工作区”标记。
+        // 它与普通路径文本占同一个位置，因此同样受“不显示文件夹所在路径”选项控制。
+        val basePathKey = projectBasePathKey
+        val currentWorkspace = basePathKey != null && absolutePathKey(File(directory.path)) == basePathKey
+        val locationText = when {
+            !showFolderPath -> null
+            currentWorkspace -> NavifoxMessageBundle.message("MrWorkspacePane.topFolder.currentWorkspace")
+            else -> relativeLocationText(directory)
+        }
+        return MrFolderLeaf(
+            key = folderSelectionKey(directory),
+            resolved = resolved,
+            directory = directory,
+            // 显示名优先取 workspace 中的 name，否则回退到目录名；顺序保持 folders 数组顺序。
+            displayName = folder.name ?: directory.name,
+            locationText = locationText,
+        )
+    }
+
+    /**
+     * 把（已过滤的）顶层文件夹列表转成树节点。
+     *
+     * - 空工作区（没有声明 folders，且“强制显示当前工作区目录”未勾选）时树没有子节点，
+     *   由 [showEmptyText] 在树中央给出占位提示。
+     * - 内容根去重：同一物理文件只在其“最深所属”的 workspace folder 下展示 —— 任一顶层 folder
+     *   的子树中，凡目录等于另一个 folder 根（[pruningRoots]），该整棵子树都不再渲染。
+     *   过滤到单个文件夹时 [pruningRoots] 为空集，即**解除去重**（只显示这一个文件夹时它应当完整可见）。
+     * - 与 VS Code 一致：相同 path 的 folder 只保留首个；path 不存在或无法解析时仍显示顶层节点
+     *   （[MrWorkspaceMissingFolderNode]，灰显 + 错误图标），而不是错误行。
+     * - 开启“自动隐藏当前工作区目录”时，解析后的绝对路径等于项目根目录（[projectBasePathKey]）的
+     *   folder 不进入可见列表，也不再充当 [pruningRoots] 中去重根的成员（其子目录因此会出现在包含它的其它根下）。
+     * - [effectiveFolders] 可能已在尾部补上“当前工作区目录”，它与显式声明的条目走同一套去重、渲染与定位路径。
+     */
+    private fun folderNodes(
+        settings: ViewSettings,
+        visible: List<MrFolderLeaf>,
+        pruningRoots: Set<String>,
+    ): List<AbstractTreeNode<*>> {
+        if (visible.isEmpty()) return emptyList()
+        val psiManager = PsiManager.getInstance(myProject)
+        return visible.mapIndexed { index, leaf ->
+            val directory = leaf.directory
+            val psiDirectory = directory?.let { psiManager.findDirectory(it) }
+            if (directory != null && psiDirectory != null) {
+                MrWorkspaceTopFolderNode(myProject, psiDirectory, settings, leaf, pruningRoots, index)
+            } else {
+                // path 不存在或无法解析：仍显示顶层文件夹（文件夹图标叠警示角标），标题用 name 回退。
                 MrWorkspaceMissingFolderNode(
                     myProject,
                     settings,
-                    folder.name ?: folderPathBasename(folder.path),
-                    normalizedPathText(folder.path).takeIf { showFolderPath },
+                    leaf.displayName,
+                    leaf.locationText,
                     index,
                 )
-            } else {
-                val psiDirectory = psiManager.findDirectory(directory)
-                if (psiDirectory != null) {
-                    // 显示名优先取 workspace 中的 name，否则回退到目录名；顺序保持 folders 数组顺序。
-                    val displayName = folder.name ?: psiDirectory.name
-                    // 与“当前工作区路径”（项目根）重合的那个 folder 没有相对路径可显示，改用“当前工作区”标记。
-                    // 它与普通路径文本占同一个位置，因此同样受“不显示文件夹所在路径”选项控制。
-                    val currentWorkspace = basePathKey != null &&
-                        absolutePathKey(File(directory.path)) == basePathKey
-                    val locationText = when {
-                        !showFolderPath -> null
-                        currentWorkspace ->
-                            NavifoxMessageBundle.message("MrWorkspacePane.topFolder.currentWorkspace")
-
-                        else -> relativeLocationText(directory)
-                    }
-                    MrWorkspaceTopFolderNode(
-                        myProject,
-                        psiDirectory,
-                        settings,
-                        displayName,
-                        locationText,
-                        otherRootPaths,
-                        index,
-                    )
-                } else {
-                    MrWorkspaceMissingFolderNode(
-                        myProject,
-                        settings,
-                        folder.name ?: folderPathBasename(folder.path),
-                        normalizedPathText(folder.path).takeIf { showFolderPath },
-                        index,
-                    )
-                }
             }
         }
     }
@@ -915,8 +1000,20 @@ internal object MrWorkspacePanes {
         panes.remove(pane)
     }
 
-    fun refresh(project: Project) {
-        panes.forEach { if (it belongsTo project) it.updateFromRoot(true) }
+    /**
+     * 整树重载当前项目的所有面板。
+     *
+     * @param expandFolderKey 不为 null 时，在面板重载完成后按该选择键（[folderSelectionKeyOf]）
+     *   把对应顶层文件夹的虚拟文件交给平台定位：平台会展开沿途节点并滚动到那一行，
+     *   用户因此直接看到所选文件夹里的内容（“文件夹”菜单选中单项后的效果）。
+     */
+    fun refresh(project: Project, expandFolderKey: String? = null) {
+        panes.filter { it belongsTo project }.forEach { pane ->
+            val callback = pane.updateFromRoot(true)
+            if (expandFolderKey != null) {
+                callback.doWhenDone { pane.expandTopFolder(expandFolderKey) }
+            }
+        }
     }
 }
 

@@ -56,6 +56,7 @@ A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "P
 │  └─ MrWorkspaceSelector.kt             discovery / selection / fallback loading
 └─ workspace/                            feature UI layer
    ├─ MrWorkspacePane.kt                 main pane class (incl. empty-state overlay)
+   ├─ MrWorkspaceFoldersMenu.kt          "Folders" menu (Alt+F2, top-level folder filter)
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 select-in target
    ├─ MrWorkspaceConfigCreator.kt        "create configuration" flow (save dialog + template)
    ├─ MrWorkspaceSettings.kt             project-level settings

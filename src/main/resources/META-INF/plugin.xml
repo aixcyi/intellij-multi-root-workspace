@@ -31,4 +31,13 @@
                            key="notification.group.mrWorkspace" />
     </extensions>
 
+    <!-- “文件夹”菜单：工具窗口头部里是动作组（子菜单）；快捷键 Alt＋F2 由具名动作弹出同一份列表。 -->
+    <actions>
+        <action id="MrWorkspace.ShowFoldersMenu"
+                class="net.navifox.plugins.workspace.MrFoldersMenuAction"
+                icon="AllIcons.Nodes.Workspace">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt F2" />
+        </action>
+    </actions>
+
 </idea-plugin>
