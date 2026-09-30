@@ -401,9 +401,13 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
             val folders = effectiveFolders(loaded.workspace.file.path, loaded.workspace.folders)
             workspaceRootDirectories = folders.mapNotNull { it.directory }
             notifyIfAutoPicked(loaded.candidates, loaded.workspace.file)
-            // “文件夹”菜单（Alt＋F2）的可选项：路径无法解析的 folder 没有可比较的目录身份，不进菜单。
-            actionOrder = folders.map { folderLeaf(loaded.workspace.file.path, it) }.filter { it.resolved != null }            // 可展示的顶层文件夹（含“自动隐藏当前工作区目录”与去重）：整棵树的唯一真相。
+
+            // 可展示的顶层文件夹（含“自动隐藏当前工作区目录”与“相同 path 只保留首个”）：树与菜单的唯一真相。
             val canonical = visibleFolderLeaves(loaded.workspace.file.path, folders)
+            // “文件夹”菜单（Alt＋F2）的可选项必须与树同源，否则会列出已被隐藏的目录
+            // （2026-09-30 实测：勾选“自动隐藏当前工作区目录”后，菜单里仍能看到那个目录）。
+            // 路径无法解析的 folder 没有可比较的目录身份，因此不进菜单（但树里照常显示警示节点）。
+            actionOrder = canonical.filter { it.resolved != null }
             val filter = getMrWorkspaceFolderFilter(myProject)
             filter.setVisibleKeys(canonical.map { it.key }.toSet())
             if (canonical.isEmpty()) {
@@ -667,14 +671,14 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
     }
 
     /**
-     * 把单个 folder 整理成展示信息；“文件夹”菜单用同一份数据，因此菜单标题、顺序与树完全一致。
+     * 把单个 folder 整理成展示信息（[visibleFolderLeaves] 去重后再调用它）。
      *
-     * @param resolved 已解析的真实路径；为 null 时会就地再解析一次（[visibleFolderLeaves] 已解析过就直接传结果）。
+     * @param resolved 解析后的真实路径（由调用方解析后传入）。
      */
     private fun folderLeaf(
         workspacePath: String,
         folder: MrFolder,
-        resolved: File? = resolveFolderPath(workspacePath, folder.path),
+        resolved: File?,
     ): MrFolderLeaf {
         // “不显示文件夹所在路径”：关掉时不给节点传路径文本（节点 update 里据此不设置 location）；
         // “当前工作区”标记占的是同一个位置，同样受它控制。
