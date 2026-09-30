@@ -16,6 +16,10 @@ dependencies {
         webstorm("2025.3.5")
         testFramework(TestFrameworkType.Platform)
 
+        // 平台内置的 kotlinx-serialization-json：用于解析 *.code-workspace（JSONC）的注释与尾逗号。
+        // 用 bundledModule 而不是 bundledLibrary：官方明确后者不要用于生产。
+        bundledModule("intellij.libraries.kotlinx.serialization.json")
+
         // Add plugin dependencies for compilation here, for example:
         // bundledPlugin("com.intellij.java")
     }

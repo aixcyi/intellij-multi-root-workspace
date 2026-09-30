@@ -53,9 +53,8 @@ A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "P
 ./src/main/kotlin/net/navifox/plugins/
 ├─ NavifoxMessageBundle.kt               dynamic message bundle wrapper
 ├─ core/                                 *.code-workspace handling toolkit (no UI dependency)
-│  ├─ Jsonc.kt                           JSONC → strict JSON sanitizer (comments/trailing commas/BOM)
 │  ├─ MrWorkspace.kt                     data model and exception
-│  ├─ MrWorkspaceParser.kt               parsing and path-resolution pure functions
+│  ├─ MrWorkspaceParser.kt               parsing (kotlinx.serialization) and path-resolution pure functions
 │  └─ MrWorkspaceSelector.kt             discovery / selection / fallback loading
 └─ workspace/                            feature UI layer
    ├─ MrWorkspacePane.kt                 main pane class (incl. empty-state overlay)

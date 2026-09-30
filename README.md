@@ -53,9 +53,8 @@
 ./src/main/kotlin/net/navifox/plugins/
 ├─ NavifoxMessageBundle.kt               动态消息包封装
 ├─ core/                                 *.code-workspace 处理工具包（无 UI 依赖）
-│  ├─ Jsonc.kt                           JSONC → 严格 JSON 消毒（注释/尾逗号/BOM）
 │  ├─ MrWorkspace.kt                     数据模型与异常
-│  ├─ MrWorkspaceParser.kt               解析与路径解析纯函数
+│  ├─ MrWorkspaceParser.kt               解析（kotlinx-serialization）与路径解析纯函数
 │  └─ MrWorkspaceSelector.kt             文件发现/选定/顺延加载
 └─ workspace/                            特性 UI 层
    ├─ MrWorkspacePane.kt                 面板主类（含空态覆盖层）
