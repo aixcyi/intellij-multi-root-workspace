@@ -58,7 +58,7 @@
 │  ├─ MrWorkspaceParser.kt               解析与路径解析纯函数
 │  └─ MrWorkspaceSelector.kt             文件发现/选定/顺延加载
 └─ workspace/                            特性 UI 层
-   ├─ MrWorkspaceViewPane.kt             面板主类（含空态覆盖层）
+   ├─ MrWorkspacePane.kt                 面板主类（含空态覆盖层）
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 定位目标
    ├─ MrWorkspaceConfigCreator.kt        新建配置流程（保存对话框 + 模板）
    ├─ MrWorkspaceSettings.kt             项目级设置

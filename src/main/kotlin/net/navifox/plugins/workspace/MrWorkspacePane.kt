@@ -84,11 +84,11 @@ import javax.swing.tree.DefaultTreeModel
  *
  * 注意：这个类不为多工作区设计，只能显示单个工作区。
  */
-class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSupport(project) {
+class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSupport(project) {
 
     companion object {
-        const val ID = "MrWorkspaceViewPane"
-        const val NOTIFICATION_GROUP_ID = "MrWorkspaceView"
+        const val ID = "MrWorkspacePane"
+        const val NOTIFICATION_GROUP_ID = "MrWorkspace"
     }
 
     /** 包装组件（树 + 空态覆盖层）。平台每次切换回本面板都会再次调用 [createComponent]，必须缓存复用。 */
@@ -128,7 +128,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         absolutePathKey(File(base))
     }
 
-    override fun getTitle(): String = NavifoxMessageBundle.message("MrWorkspaceViewPane.title")
+    override fun getTitle(): String = NavifoxMessageBundle.message("MrWorkspacePane.title")
 
     override fun getId(): String = ID
 
@@ -245,11 +245,11 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
         val box = JPanel().apply {
             isOpaque = false
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(JLabel(NavifoxMessageBundle.message("MrWorkspaceViewPane.noConfigState.title")).apply {
+            add(JLabel(NavifoxMessageBundle.message("MrWorkspacePane.noConfigState.title")).apply {
                 alignmentX = Component.CENTER_ALIGNMENT
             })
             add(Box.createVerticalStrut(12))
-            add(JButton(NavifoxMessageBundle.message("MrWorkspaceViewPane.noConfigState.create")).apply {
+            add(JButton(NavifoxMessageBundle.message("MrWorkspacePane.noConfigState.create")).apply {
                 alignmentX = Component.CENTER_ALIGNMENT
                 addActionListener {
                     if (!myProject.isDisposed) {
@@ -295,8 +295,8 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     // 我记得是工具栏菜单
     override fun addToolbarActions(group: DefaultActionGroup) {
         group.add(object : AnAction(
-            NavifoxMessageBundle.message("MrWorkspaceViewPane.refresh"),
-            NavifoxMessageBundle.message("MrWorkspaceViewPane.refresh.description"),
+            NavifoxMessageBundle.message("MrWorkspacePane.refresh"),
+            NavifoxMessageBundle.message("MrWorkspacePane.refresh.description"),
             AllIcons.Actions.Refresh,
         ) {
             override fun actionPerformed(e: AnActionEvent) {
@@ -306,7 +306,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     }
 
     /**
-     * 判断其它 [MrWorkspaceViewPane] 跟当前实例属不属于同一个 [Project]。
+     * 判断其它 [MrWorkspacePane] 跟当前实例属不属于同一个 [Project]。
      */
     internal infix fun belongsTo(project: Project): Boolean = myProject === project
 
@@ -333,7 +333,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     }
 
     /**
-     * [MrWorkspaceViewPane] 组件所用的数据结构嘞。
+     * [MrWorkspacePane] 组件所用的数据结构嘞。
      */
     private inner class MrWorkspaceTreeStructure : ProjectTreeStructure(myProject, ID) {
         override fun createRoot(project: Project, settings: ViewSettings): AbstractTreeNode<*> =
@@ -341,7 +341,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     }
 
     /**
-     * [MrWorkspaceViewPane] 组件 根节点。
+     * [MrWorkspacePane] 组件 根节点。
      */
     private inner class MrWorkspaceRootNode(
         project: Project,
@@ -370,7 +370,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
 
         override fun update(presentation: PresentationData) {
             presentation.setIcon(AllIcons.Nodes.Workspace)
-            presentation.setPresentableText(NavifoxMessageBundle.message("MrWorkspaceViewPane.title"))
+            presentation.setPresentableText(NavifoxMessageBundle.message("MrWorkspacePane.title"))
         }
 
         /**
@@ -382,7 +382,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     }
 
     /**
-     * [MrWorkspaceViewPane] 组件 顶层文件夹节点。
+     * [MrWorkspacePane] 组件 顶层文件夹节点。
      *
      * - 显示 `*.code-workspace` 文件中的 `folders[].name`，如果没有则提取 `folders[].path` 的目录名称；
      *   与该 folder 相对项目根的路径（灰色小字，跟在名称后方同一行）。
@@ -503,7 +503,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     }
 
     /**
-     * [MrWorkspaceViewPane] 组件 顶层“目录不存在或无法解析”的文件夹节点。
+     * [MrWorkspacePane] 组件 顶层“目录不存在或无法解析”的文件夹节点。
      *
      * path 指向的目录不存在时仍显示一个顶层文件夹（文件夹图标叠加右下角警示角标，不可展开），
      * 标题优先用 folders 的 name，否则取 path 末尾的目录名。
@@ -551,7 +551,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      */
     private fun folderNodes(settings: ViewSettings, workspace: MrWorkspace): List<AbstractTreeNode<*>> {
         if (workspace.folders.isEmpty()) {
-            showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.noFolders"))
+            showEmptyText(NavifoxMessageBundle.message("MrWorkspacePane.noFolders"))
             return emptyList()
         }
         val psiManager = PsiManager.getInstance(myProject)
@@ -571,7 +571,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
             if (hidden) null else resolved to folder
         }
         if (visibleFolders.isEmpty()) {
-            showEmptyText(NavifoxMessageBundle.message("MrWorkspaceViewPane.allFoldersHidden"))
+            showEmptyText(NavifoxMessageBundle.message("MrWorkspacePane.allFoldersHidden"))
             return emptyList()
         }
         showEmptyText(null)
@@ -699,13 +699,13 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
 
         val group = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
         val notification = group.createNotification(
-            NavifoxMessageBundle.message("MrWorkspaceViewPane.notification.title"),
-            NavifoxMessageBundle.message("MrWorkspaceViewPane.notification.content", files.size, chosen.name),
+            NavifoxMessageBundle.message("MrWorkspacePane.notification.title"),
+            NavifoxMessageBundle.message("MrWorkspacePane.notification.content", files.size, chosen.name),
             NotificationType.INFORMATION,
         )
         notification.addAction(
             NotificationAction.createSimple(
-                NavifoxMessageBundle.message("MrWorkspaceViewPane.notification.action.settings")
+                NavifoxMessageBundle.message("MrWorkspacePane.notification.action.settings")
             ) {
                 if (!myProject.isDisposed) {
                     openWorkspaceSettings(myProject)
@@ -835,15 +835,15 @@ private object FillOverlayLayout : LayoutManager {
 
 /** 供设置页在 apply 后触发当前项目里所有已创建面板刷新。 */
 internal object MrWorkspacePanes {
-    private val panes = CopyOnWriteArrayList<MrWorkspaceViewPane>()
+    private val panes = CopyOnWriteArrayList<MrWorkspacePane>()
 
-    fun register(pane: MrWorkspaceViewPane) {
+    fun register(pane: MrWorkspacePane) {
         if (!panes.contains(pane)) {
             panes.add(pane)
         }
     }
 
-    fun unregister(pane: MrWorkspaceViewPane) {
+    fun unregister(pane: MrWorkspacePane) {
         panes.remove(pane)
     }
 
@@ -860,4 +860,4 @@ private const val AUTO_REFRESH_DELAY_MS = 350
 private var autoPickNotifiedKey: String? = null
 
 /** 全部候选 *.code-workspace 均不可用时的诊断日志。 */
-private val LOG = Logger.getInstance(MrWorkspaceViewPane::class.java)
+private val LOG = Logger.getInstance(MrWorkspacePane::class.java)

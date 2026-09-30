@@ -31,8 +31,8 @@ A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "P
 .
 ├── .run/                    Predefined run/debug configurations
 ├── gradle/
-│   ├── wrapper/            Gradle wrapper
-│   ├── libs.versions.toml  Version catalog
+│   ├── wrapper/             Gradle wrapper
+│   ├── libs.versions.toml   Version catalog
 ├── src/                     Plugin source code
 │   └── main/
 │       ├── java/            Source code (Java). Not used by this project
@@ -40,25 +40,25 @@ A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "P
 │       └── resources/       Plugin resources
 │           ├── META-INF/    Plugin configuration and icons
 │           └── messages/    Message bundles
-├── .gitignore              Git ignore rules
-├── build.gradle.kts        Gradle build configuration
-├── gradle.properties       Gradle properties
-├── gradlew                 Gradle wrapper script (*nix)
-├── gradlew.bat             Gradle wrapper script (Windows)
-├── README.md               This file
-└── settings.gradle.kts     Gradle settings
+├── .gitignore               Git ignore rules
+├── build.gradle.kts         Gradle build configuration
+├── gradle.properties        Gradle properties
+├── gradlew                  Gradle wrapper script (*nix)
+├── gradlew.bat              Gradle wrapper script (Windows)
+├── README.md                This file
+└── settings.gradle.kts      Gradle settings
 ```
 
 ```
 ./src/main/kotlin/net/navifox/plugins/
 ├─ NavifoxMessageBundle.kt               dynamic message bundle wrapper
-├─ core/                                *.code-workspace handling toolkit (no UI dependency)
-│  ├─ Jsonc.kt                          JSONC → strict JSON sanitizer (comments/trailing commas/BOM)
+├─ core/                                 *.code-workspace handling toolkit (no UI dependency)
+│  ├─ Jsonc.kt                           JSONC → strict JSON sanitizer (comments/trailing commas/BOM)
 │  ├─ MrWorkspace.kt                     data model and exception
 │  ├─ MrWorkspaceParser.kt               parsing and path-resolution pure functions
 │  └─ MrWorkspaceSelector.kt             discovery / selection / fallback loading
 └─ workspace/                            feature UI layer
-   ├─ MrWorkspaceViewPane.kt             main pane class (incl. empty-state overlay)
+   ├─ MrWorkspacePane.kt                 main pane class (incl. empty-state overlay)
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 select-in target
    ├─ MrWorkspaceConfigCreator.kt        "create configuration" flow (save dialog + template)
    ├─ MrWorkspaceSettings.kt             project-level settings

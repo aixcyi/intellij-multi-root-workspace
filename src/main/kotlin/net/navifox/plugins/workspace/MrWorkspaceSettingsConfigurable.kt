@@ -26,7 +26,7 @@ import javax.swing.JList
  * - 页面只有一个“显示”分组，内含“文本标签 + 下拉框”与两个复选框，无多余说明文字；
  * - 没有可用配置（项目根目录下无任何 `*.code-workspace` 文件）时下拉框不置灰，
  *   自动选中一个“（无可用配置文件）”占位选项——该选项不会被保存（Apply 时写 `null`）；
- * - 新建配置的入口在“多根工作区”工具窗口的空态里（[MrWorkspaceViewPane] 中的创建链接）；
+ * - 新建配置的入口在“多根工作区”工具窗口的空态里（[MrWorkspacePane] 中的创建链接）；
  * - 布局用平台 UI DSL，选中值与设置状态的读写沿用 `SearchableConfigurable` 生命周期
  *   （`null` 表示自动检测，无法用简单的绑定表达，故不注册 DSL 回调）。
  */
@@ -51,7 +51,7 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     override fun getId(): String = ID
 
     override fun getDisplayName(): String =
-        NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.title")
+        NavifoxMessageBundle.message("settings.tools.MrWorkspace.title")
 
     override fun createComponent(): JComponent {
         val combo = ComboBox<String>()
@@ -81,20 +81,20 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         fileCombo = combo
 
         return panel {
-            group(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.group.display")) {
-                row(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.sourceLabel")) {
+            group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.display")) {
+                row(NavifoxMessageBundle.message("settings.tools.MrWorkspace.sourceLabel")) {
                     cell(combo)
                         .align(AlignX.FILL)
                         .resizableColumn()
                 }
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.hideWorkspaceDirectory"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideWorkspaceDirectory"))
                         .also { hideWorkspaceDirCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
                 // 文案里的“所在路径”本意是像面板里那个灰色路径后缀那样染灰，但平台 UI DSL 的复选框只吃
                 // 纯文本，而“复选框 + 独立灰字标签”会被布局压到只剩两个字宽，因此按约定退回单行纯文本。
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.hideFolderPath"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFolderPath"))
                         .also { hideFolderPathCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
             }
@@ -149,7 +149,7 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         val files = findWorkspaceFiles(project)
         combo.removeAllItems()
         if (files.isEmpty()) {
-            combo.addItem(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.noConfigOption"))
+            combo.addItem(NavifoxMessageBundle.message("settings.tools.MrWorkspace.noConfigOption"))
             combo.selectedItem = combo.getItemAt(0)
         } else {
             files.forEach { combo.addItem(it.name) }

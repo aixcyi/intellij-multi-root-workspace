@@ -15,7 +15,7 @@ import net.navifox.plugins.NavifoxMessageBundle
  * “在此视图中选择”（SelectIn，Alt＋F1）时把目标文件或目录定位到本面板树里的目标实现。
  *
  * - 注册到扩展点 `com.intellij.selectInTarget`，因此会出现在全局“在…中选中”列表；
- * - [MrWorkspaceViewPane.createSelectInTarget] 返回同一实现，供项目视图内部按“当前面板”定位，
+ * - [MrWorkspacePane.createSelectInTarget] 返回同一实现，供项目视图内部按“当前面板”定位，
  *   两条路径行为一致。
  *
  * 选中前会把 Project 工具窗口切到本面板（changeView），再交给平台（ProjectView.select → 面板
@@ -30,19 +30,19 @@ import net.navifox.plugins.NavifoxMessageBundle
 class MrWorkspaceSelectInTarget(private val project: Project) : SelectInTarget, DumbAware {
 
     // 在菜单里显示的代表自己的文本，所以直接用面板标题就好了。
-    override fun toString(): String = NavifoxMessageBundle.message("MrWorkspaceViewPane.title")
+    override fun toString(): String = NavifoxMessageBundle.message("MrWorkspacePane.title")
 
     // 用 Project View 的 ID 表示挂靠到这个下面。
     override fun getToolWindowId(): String = ToolWindowId.PROJECT_VIEW
 
     // 子菜单对应的 ID：必须是面板自身的 ID（平台要求 minorViewId 与 pane 的 id 一致）。
-    override fun getMinorViewId(): String = MrWorkspaceViewPane.ID
+    override fun getMinorViewId(): String = MrWorkspacePane.ID
 
     // 负权重：排到原生“项目”入口（默认权重 0f）之前，让自动定位优先落到本视图，见类注释。
     override fun getWeight(): Float = -1f
 
-    private fun findPane(): MrWorkspaceViewPane? =
-        ProjectView.getInstance(project).getProjectViewPaneById(MrWorkspaceViewPane.ID) as? MrWorkspaceViewPane
+    private fun findPane(): MrWorkspacePane? =
+        ProjectView.getInstance(project).getProjectViewPaneById(MrWorkspacePane.ID) as? MrWorkspacePane
 
     private fun currentRoots(): List<VirtualFile> = findPane()?.workspaceRootDirectories ?: emptyList()
 
@@ -86,7 +86,7 @@ class MrWorkspaceSelectInTarget(private val project: Project) : SelectInTarget, 
         if (findPane() == null) {
             return
         }
-        view.changeView(MrWorkspaceViewPane.ID)
+        view.changeView(MrWorkspacePane.ID)
         // 以文件本身作为定位对象：本面板展示的是文件级节点（不含成员），直接走纯文件定位，
         // 避免按 PSI 元素匹配时因树中不存在对应元素节点而失败。
         view.select(file, file, requestFocus)

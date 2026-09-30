@@ -8,6 +8,24 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### 修复
+
+- 修正通知组 ID 与 `plugin.xml` 中注册值不一致的问题：此前项目根目录下存在多个 `*.code-workspace` 文件时，自动选用文件的气泡提示不会出现（该分支使用了未注册的通知组，会抛出异常）。
+
+### Fixed
+
+- Fix the notification group ID not matching the value registered in `plugin.xml`: the balloon that reports which `*.code-workspace` file was picked automatically never appeared when the project root contained several of them (that branch used an unregistered notification group and threw an exception).
+
+### 变更
+
+- **破坏性变更**：插件 ID 由 `net.navifox.plugins.multi-root-workspace-view` 改为 `net.navifox.plugins.mr-workspace`。IDE 会把二者视为两个不同的插件，升级前请先卸载旧插件再安装新版本，旧插件也不会再收到更新；构建产物名随之改为 `mr-workspace-<version>.zip`。
+- 统一内部标识符：面板类 `MrWorkspaceViewPane` 更名为 `MrWorkspacePane`，面板 ID 与项目级设置的持久化名改用更短的 `MrWorkspace` 前缀。这些标识写在项目的 `workspace.xml` 中，升级后“项目”工具窗口会回到原生“项目”面板（需重新选择“多根工作区”视图，其此前保存的展开状态不再保留），各项目在设置页选定的“多根工作区目录配置源”与两个显示选项（“自动隐藏当前工作区目录”“不显示文件夹所在路径”）同样恢复默认。
+
+### Changed
+
+- **Breaking change**: the plugin ID changes from `net.navifox.plugins.multi-root-workspace-view` to `net.navifox.plugins.mr-workspace`. IDEs treat the two as separate plugins, so uninstall the old plugin before installing this release, and the old plugin will no longer receive updates; the distribution file is renamed to `mr-workspace-<version>.zip` as well.
+- Unify internal identifiers: the pane class `MrWorkspaceViewPane` is renamed to `MrWorkspacePane`, and the pane ID with the project-level settings state name now use the shorter `MrWorkspace` prefix. These identifiers are stored in the project's `workspace.xml`, so after upgrading the Project tool window falls back to the native Project pane (the "Workspace (Multi-Root)" view must be selected again and its previously saved expansion state is discarded), and each project's "Workspace source file" setting plus the two display options ("Hide the Current Workspace Directory Automatically", "Hide the Folder Location") also return to their defaults.
+
 ## [0.1.2] - 2026-09-29
 
 ### 新增

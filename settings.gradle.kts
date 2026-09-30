@@ -1,6 +1,6 @@
 import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
 
-rootProject.name = "multi-root-workspace-view"
+rootProject.name = "mr-workspace"
 
 pluginManagement {
     plugins {

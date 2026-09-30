@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
  * 文件扫描、选定与顺延解析规则见 `net.navifox.plugins.core` 工具包。
  */
 @Service(Service.Level.PROJECT)
-@State(name = "MultiRootWorkspaceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "MrWorkspaceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> {
 
     class State {
