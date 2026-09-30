@@ -1,6 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="运行测试" type="GradleRunConfiguration" factoryName="Gradle">
-        <log_file alias="idea.log" path="$PROJECT_DIR$/.intellijPlatform/sandbox/*/*/log-test/idea.log"
+    <configuration default="false"
+                   name="运行测试"
+                   type="GradleRunConfiguration"
+                   factoryName="Gradle">
+        <log_file alias="idea.log"
+                  path="$PROJECT_DIR$/.intellijPlatform/sandbox/*/*/log-test/idea.log"
                   show_all="true" />
         <ExternalSystemSettings>
             <option name="executionName" />
