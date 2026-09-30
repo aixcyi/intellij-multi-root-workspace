@@ -8,6 +8,8 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-29
+
 ### 新增
 
 - 新增“自动隐藏当前工作区目录”选项（位于设置页“显示”分组）：勾选后，工作区中路径与当前项目根目录完全一致的顶层文件夹不再显示（按解析后的绝对路径判断，不依赖 `.`、`./` 等写法）。
