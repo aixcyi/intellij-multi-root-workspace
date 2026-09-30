@@ -8,6 +8,14 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### 新增
+
+- 新增“不再提醒有多个 *.code-workspace 文件可以切换”设置项；自动选用文件时弹出的气泡提示里也加了“不再提醒”链接，点一下即勾选该设置，之后不再提示。
+
+### Added
+
+- Add a "Do Not Remind Me About Multiple *.code-workspace Files" option; the balloon shown when a file is picked automatically now offers a "Don't Remind Again" link that enables the option and stops further reminders.
+
 ### 修复
 
 - 修正通知组 ID 与 `plugin.xml` 中注册值不一致的问题：此前项目根目录下存在多个 `*.code-workspace` 文件时，自动选用文件的气泡提示不会出现（该分支使用了未注册的通知组，会抛出异常）。

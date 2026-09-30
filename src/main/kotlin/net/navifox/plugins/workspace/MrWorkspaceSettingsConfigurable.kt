@@ -23,7 +23,7 @@ import javax.swing.JList
 /**
  * Settings → Tools 下的设置页：指定 Project 面板读取哪个 `*.code-workspace` 文件。
  *
- * - 页面只有一个“显示”分组，内含“文本标签 + 下拉框”与两个复选框，无多余说明文字；
+ * - 页面由“配置源”下拉框与其后的“显示”“通知”两个分组组成，无多余说明文字；
  * - 没有可用配置（项目根目录下无任何 `*.code-workspace` 文件）时下拉框不置灰，
  *   自动选中一个“（无可用配置文件）”占位选项——该选项不会被保存（Apply 时写 `null`）；
  * - 新建配置的入口在“多根工作区”工具窗口的空态里（[MrWorkspacePane] 中的创建链接）；
@@ -44,9 +44,13 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     /** “不显示文件夹所在路径”复选框；同上。 */
     private var hideFolderPathCheckBox: JCheckBox? = null
 
-    /** 两个复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
+    /** “不再提醒有多个配置文件可以切换”复选框；同上（气泡里的同名链接也会写这个值）。 */
+    private var neverNotifyCheckBox: JCheckBox? = null
+
+    /** 各复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
     private var hideWorkspaceDirResetValue: Boolean = false
     private var hideFolderPathResetValue: Boolean = false
+    private var neverNotifyResetValue: Boolean = false
 
     override fun getId(): String = ID
 
@@ -96,6 +100,12 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
                         .also { hideFolderPathCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
             }
+            group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.notification")) {
+                row {
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.neverNotifyMultipleWorkspaceFiles"))
+                        .also { neverNotifyCheckBox = it.component }
+                }.layout(RowLayout.PARENT_GRID)
+            }
         }
     }
 
@@ -104,6 +114,7 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         // 复选框若用绑定则由平台比对，会把“创建时已是勾选”的情况误判成已修改。
         if (isCheckBoxModified(hideWorkspaceDirCheckBox, hideWorkspaceDirResetValue)) return true
         if (isCheckBoxModified(hideFolderPathCheckBox, hideFolderPathResetValue)) return true
+        if (isCheckBoxModified(neverNotifyCheckBox, neverNotifyResetValue)) return true
         val files = findWorkspaceFiles(project)
         if (files.isEmpty()) return false // 只有占位选项，无可保存的配置源修改
         val selected = fileCombo?.selectedItem as? String
@@ -127,6 +138,8 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         settings.state.selectedWorkspaceFile = selected
         settings.state.hideWorkspaceDirectory = hideWorkspaceDirCheckBox?.isSelected ?: false
         settings.state.showFolderPath = !(hideFolderPathCheckBox?.isSelected ?: false)
+        // 控件不存在时不写这个值：气泡里的“不再提醒”可能刚把它置为 true，别在这里被覆盖掉。
+        neverNotifyCheckBox?.let { settings.state.neverNotifyMultipleWorkspaceFiles = it.isSelected }
         MrWorkspacePanes.refresh(project)
     }
 
@@ -137,6 +150,8 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         hideWorkspaceDirCheckBox?.isSelected = state.hideWorkspaceDirectory
         hideFolderPathResetValue = !state.showFolderPath
         hideFolderPathCheckBox?.isSelected = !state.showFolderPath
+        neverNotifyResetValue = state.neverNotifyMultipleWorkspaceFiles
+        neverNotifyCheckBox?.isSelected = state.neverNotifyMultipleWorkspaceFiles
     }
 
     /**

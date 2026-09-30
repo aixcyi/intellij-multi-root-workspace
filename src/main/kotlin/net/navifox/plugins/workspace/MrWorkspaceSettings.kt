@@ -29,6 +29,13 @@ class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> 
          * 用法是“反向”的（勾选＝隐藏），以配合设置页里“不显示文件夹所在路径”的复选框文案。
          */
         var showFolderPath: Boolean = true
+
+        /**
+         * 不再提醒“有多个 `*.code-workspace` 文件可以切换”。
+         *
+         * 自动选用文件时弹出的气泡就此静默；气泡里的“不再提醒”链接与设置页的同名复选框写的是同一个值。
+         */
+        var neverNotifyMultipleWorkspaceFiles: Boolean = false
     }
 
     private var state = State()

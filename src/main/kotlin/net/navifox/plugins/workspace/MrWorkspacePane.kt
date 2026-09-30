@@ -689,10 +689,15 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         }
     }
 
-    /** 多个文件且未在设置中指定时自动选用一个（解析失败会顺延），弹一次右下角气泡并可跳转设置页。 */
+    /**
+     * 多个文件且未在设置中指定时自动选用一个（解析失败会顺延），弹一次右下角气泡：
+     * 可跳转设置页，也可点“不再提醒”直接把设置页里同名的复选框勾上（同一个布尔值，之后不再弹）。
+     */
     private fun notifyIfAutoPicked(files: List<VirtualFile>, chosen: VirtualFile) {
         if (files.size <= 1) return
-        if (getMrWorkspaceSettings(myProject).state.selectedWorkspaceFile != null) return
+        val settings = getMrWorkspaceSettings(myProject)
+        if (settings.state.selectedWorkspaceFile != null) return
+        if (settings.state.neverNotifyMultipleWorkspaceFiles) return
         val key = files.joinToString("|") { it.name }
         if (autoPickNotifiedKey == key) return
         autoPickNotifiedKey = key
@@ -710,6 +715,15 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
                 if (!myProject.isDisposed) {
                     openWorkspaceSettings(myProject)
                 }
+            })
+        notification.addAction(
+            NotificationAction.createSimple(
+                NavifoxMessageBundle.message("MrWorkspacePane.notification.action.mute")
+            ) {
+                if (!myProject.isDisposed) {
+                    getMrWorkspaceSettings(myProject).state.neverNotifyMultipleWorkspaceFiles = true
+                }
+                notification.expire()
             })
         Notifications.Bus.notify(notification, myProject)
     }
