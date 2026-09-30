@@ -11,10 +11,16 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 ### 新增
 
 - 新增“不再提醒有多个 *.code-workspace 文件可以切换”设置项；自动选用文件时弹出的气泡提示里也加了“不再提醒”链接，点一下即勾选该设置，之后不再提示。
+- 设置页“配置源”下方新增一行小字说明，介绍 `*.code-workspace` 的格式与来源，并附上 VS Code 官方文档链接。
+- 顶层文件夹中与当前工作区路径（项目根）相同的那一个，现在会在名称后方显示灰色的“当前工作区”标记（此前该位置为空）。
+- “显示”分组新增“强制显示当前工作区目录”复选框：勾选后，若配置文件没有声明当前工作区目录，插件会自动补一个文件夹放到列表尾部；它与“自动隐藏当前工作区目录”互斥，勾选一个会自动取消另一个，二者也可以都不勾选。
 
 ### Added
 
 - Add a "Do Not Remind Me About Multiple *.code-workspace Files" option; the balloon shown when a file is picked automatically now offers a "Don't Remind Again" link that enables the option and stops further reminders.
+- Add a short note below the workspace source file selector describing the `*.code-workspace` format and origin, with a link to the VS Code documentation.
+- The top-level folder matching the current workspace path (the project root) now shows a gray "Current Workspace" label after its name instead of nothing.
+- Add a "Force the Current Workspace Directory to Be Shown" option to the "Display" group: when enabled and the workspace file does not declare the current workspace directory, a folder for it is appended at the end of the list. It is mutually exclusive with "Hide the Current Workspace Directory Automatically" (checking one clears the other; both may stay unchecked).
 
 ### 修复
 

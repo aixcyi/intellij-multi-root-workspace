@@ -14,6 +14,7 @@ import net.navifox.plugins.core.WORKSPACE_SUFFIX
 import net.navifox.plugins.core.findWorkspaceFiles
 import net.navifox.plugins.core.resolveWorkspaceFile
 import java.awt.Component
+import java.awt.event.ItemEvent
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -23,7 +24,9 @@ import javax.swing.JList
 /**
  * Settings → Tools 下的设置页：指定 Project 面板读取哪个 `*.code-workspace` 文件。
  *
- * - 页面由“配置源”下拉框与其后的“显示”“通知”两个分组组成，无多余说明文字；
+ * - 页面由“配置源”下拉框与其后的“显示”“通知”两个分组组成，无多余说明文字
+ *   （“显示”里的“自动隐藏当前工作区目录”与“强制显示当前工作区目录”互斥：前者隐藏已声明的，
+ *   后者在配置文件没声明时补一个到尾部，可都不勾选）；
  * - 没有可用配置（项目根目录下无任何 `*.code-workspace` 文件）时下拉框不置灰，
  *   自动选中一个“（无可用配置文件）”占位选项——该选项不会被保存（Apply 时写 `null`）；
  * - 新建配置的入口在“多根工作区”工具窗口的空态里（[MrWorkspacePane] 中的创建链接）；
@@ -34,6 +37,10 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
 
     companion object {
         const val ID = "net.navifox.plugins.workspace.settings"
+
+        /** VS Code 的多根工作区（`*.code-workspace`）官方文档，用于“配置源”下方那段说明。 */
+        private const val VSCODE_WORKSPACES_DOC_URL =
+            "https://code.visualstudio.com/docs/editing/workspaces/multi-root-workspaces"
     }
 
     private var fileCombo: ComboBox<String>? = null
@@ -44,12 +51,16 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     /** “不显示文件夹所在路径”复选框；同上。 */
     private var hideFolderPathCheckBox: JCheckBox? = null
 
+    /** “强制显示当前工作区目录”复选框；同上，且与 [hideWorkspaceDirCheckBox] 互斥。 */
+    private var forceShowWorkspaceDirCheckBox: JCheckBox? = null
+
     /** “不再提醒有多个配置文件可以切换”复选框；同上（气泡里的同名链接也会写这个值）。 */
     private var neverNotifyCheckBox: JCheckBox? = null
 
     /** 各复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
     private var hideWorkspaceDirResetValue: Boolean = false
     private var hideFolderPathResetValue: Boolean = false
+    private var forceShowWorkspaceDirResetValue: Boolean = false
     private var neverNotifyResetValue: Boolean = false
 
     override fun getId(): String = ID
@@ -84,16 +95,26 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         }
         fileCombo = combo
 
-        return panel {
+        val component = panel {
             row(NavifoxMessageBundle.message("settings.tools.MrWorkspace.sourceLabel")) {
                 cell(combo)
                     .align(AlignX.FILL)
                     .resizableColumn()
+                    .comment(
+                        NavifoxMessageBundle.message(
+                            "settings.tools.MrWorkspace.sourceComment",
+                            VSCODE_WORKSPACES_DOC_URL,
+                        )
+                    )
             }
             group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.display")) {
                 row {
                     checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideWorkspaceDirectory"))
                         .also { hideWorkspaceDirCheckBox = it.component }
+                }.layout(RowLayout.PARENT_GRID)
+                row {
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.forceShowWorkspaceDirectory"))
+                        .also { forceShowWorkspaceDirCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
                 row {
                     checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFolderPath"))
@@ -107,12 +128,23 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
                 }.layout(RowLayout.PARENT_GRID)
             }
         }
+        // “自动隐藏”与“强制显示”互斥：勾选一个会取消另一个；二者都不勾选是允许的（同样是显示）。
+        makeMutuallyExclusiveCheckBoxes(hideWorkspaceDirCheckBox, forceShowWorkspaceDirCheckBox)
+        return component
+    }
+
+    /** 两个复选框互斥：勾选任一个时取消另一个（都允许不勾选）。 */
+    private fun makeMutuallyExclusiveCheckBoxes(first: JCheckBox?, second: JCheckBox?) {
+        if (first == null || second == null) return
+        first.addItemListener { event -> if (event.stateChange == ItemEvent.SELECTED) second.isSelected = false }
+        second.addItemListener { event -> if (event.stateChange == ItemEvent.SELECTED) first.isSelected = false }
     }
 
     override fun isModified(): Boolean {
         // 控件都自行比对：下拉框的选择值语义（`null` 表示自动检测）无法用绑定表达，
         // 复选框若用绑定则由平台比对，会把“创建时已是勾选”的情况误判成已修改。
         if (isCheckBoxModified(hideWorkspaceDirCheckBox, hideWorkspaceDirResetValue)) return true
+        if (isCheckBoxModified(forceShowWorkspaceDirCheckBox, forceShowWorkspaceDirResetValue)) return true
         if (isCheckBoxModified(hideFolderPathCheckBox, hideFolderPathResetValue)) return true
         if (isCheckBoxModified(neverNotifyCheckBox, neverNotifyResetValue)) return true
         val files = findWorkspaceFiles(project)
@@ -137,6 +169,7 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         val settings = getMrWorkspaceSettings(project)
         settings.state.selectedWorkspaceFile = selected
         settings.state.hideWorkspaceDirectory = hideWorkspaceDirCheckBox?.isSelected ?: false
+        settings.state.forceShowWorkspaceDirectory = forceShowWorkspaceDirCheckBox?.isSelected ?: false
         settings.state.showFolderPath = !(hideFolderPathCheckBox?.isSelected ?: false)
         // 控件不存在时不写这个值：气泡里的“不再提醒”可能刚把它置为 true，别在这里被覆盖掉。
         neverNotifyCheckBox?.let { settings.state.neverNotifyMultipleWorkspaceFiles = it.isSelected }
@@ -148,6 +181,8 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         val state = getMrWorkspaceSettings(project).state
         hideWorkspaceDirResetValue = state.hideWorkspaceDirectory
         hideWorkspaceDirCheckBox?.isSelected = state.hideWorkspaceDirectory
+        forceShowWorkspaceDirResetValue = state.forceShowWorkspaceDirectory
+        forceShowWorkspaceDirCheckBox?.isSelected = state.forceShowWorkspaceDirectory
         hideFolderPathResetValue = !state.showFolderPath
         hideFolderPathCheckBox?.isSelected = !state.showFolderPath
         neverNotifyResetValue = state.neverNotifyMultipleWorkspaceFiles

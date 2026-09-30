@@ -24,6 +24,18 @@ class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> 
         var hideWorkspaceDirectory: Boolean = false
 
         /**
+         * 强制显示与“当前工作区路径”（项目根目录）完全一致的顶层文件夹。默认不设置。
+         *
+         * 与 [hideWorkspaceDirectory] 管“隐藏已声明的”不同，它管的是“补”：勾选后，若 `*.code-workspace`
+         * 的 `folders` 里**没有**声明项目根目录，就自动补一个文件夹放到列表**尾部**（名字取目录名，
+         * 位置文本显示为“当前工作区”）；已经声明时不做任何事。
+         *
+         * 二者在设置页里互斥：勾选一个会自动取消另一个，也可以都不勾选。若状态里同时为 `true`
+         * （例如手改过配置文件），以本项为准——**“强制显示”优先于“自动隐藏”**。
+         */
+        var forceShowWorkspaceDirectory: Boolean = false
+
+        /**
          * 显示顶层文件夹名称后方的相对路径（与名称同一行的灰色小字）。默认显示。
          *
          * 用法是“反向”的（勾选＝隐藏），以配合设置页里“不显示文件夹所在路径”的复选框文案。
