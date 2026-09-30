@@ -12,11 +12,13 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 - 新增“自动隐藏当前工作区目录”选项（位于设置页“显示”分组）：勾选后，工作区中路径与当前项目根目录完全一致的顶层文件夹不再显示（按解析后的绝对路径判断，不依赖 `.`、`./` 等写法）。
 - 隐藏该文件夹后，其子目录不再被“内容根去重”剪除，会照常出现在包含它的其它根目录下。
+- 新增“不显示文件夹所在路径”选项（同样位于设置页“显示”分组，默认不勾选）：勾选后不再显示顶层文件夹名称后方的相对路径。
 
 ### Added
 
 - Add a "Hide the current workspace directory automatically" option (in the "Display" group of the settings page): when enabled, a top-level folder whose resolved absolute path is exactly the current project root is no longer shown; the comparison does not rely on `.` or `./` spellings.
 - Once that folder is hidden, its subdirectories are no longer pruned by content-root de-duplication and appear normally under the other roots that include them.
+- Add a "Hide the Folder Location" option (in the "Display" group of the settings page, off by default): when enabled, the relative path shown as gray text right after each top-level folder name is no longer displayed.
 
 ### 修复
 

@@ -23,7 +23,7 @@ import javax.swing.JList
 /**
  * Settings → Tools 下的设置页：指定 Project 面板读取哪个 `*.code-workspace` 文件。
  *
- * - 页面只有“文本标签 + 下拉框”，无多余说明文字；
+ * - 页面只有一个“显示”分组，内含“文本标签 + 下拉框”与两个复选框，无多余说明文字；
  * - 没有可用配置（项目根目录下无任何 `*.code-workspace` 文件）时下拉框不置灰，
  *   自动选中一个“（无可用配置文件）”占位选项——该选项不会被保存（Apply 时写 `null`）；
  * - 新建配置的入口在“多根工作区”工具窗口的空态里（[MrWorkspaceViewPane] 中的创建链接）；
@@ -38,11 +38,15 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
 
     private var fileCombo: ComboBox<String>? = null
 
-    /** 复选框组件；由本类自行做状态比对（不使用 DSL 绑定，见 [isModified]）。 */
+    /** “自动隐藏当前工作区目录”复选框；由本类自行做状态比对（不使用 DSL 绑定，见 [isModified]）。 */
     private var hideWorkspaceDirCheckBox: JCheckBox? = null
 
-    /** 复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
+    /** “不显示文件夹所在路径”复选框；同上。 */
+    private var hideFolderPathCheckBox: JCheckBox? = null
+
+    /** 两个复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
     private var hideWorkspaceDirResetValue: Boolean = false
+    private var hideFolderPathResetValue: Boolean = false
 
     override fun getId(): String = ID
 
@@ -77,26 +81,31 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         fileCombo = combo
 
         return panel {
-            row(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.sourceLabel")) {
-                cell(combo)
-                    .align(AlignX.FILL)
-                    .resizableColumn()
-            }
             group(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.group.display")) {
+                row(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.sourceLabel")) {
+                    cell(combo)
+                        .align(AlignX.FILL)
+                        .resizableColumn()
+                }
                 row {
                     checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.hideWorkspaceDirectory"))
                         .also { hideWorkspaceDirCheckBox = it.component }
+                }.layout(RowLayout.PARENT_GRID)
+                // 文案里的“所在路径”本意是像面板里那个灰色路径后缀那样染灰，但平台 UI DSL 的复选框只吃
+                // 纯文本，而“复选框 + 独立灰字标签”会被布局压到只剩两个字宽，因此按约定退回单行纯文本。
+                row {
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspaceView.hideFolderPath"))
+                        .also { hideFolderPathCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
             }
         }
     }
 
     override fun isModified(): Boolean {
-        // 两个控件都自行比对：下拉框的选择值语义（`null` 表示自动检测）无法用绑定表达，
+        // 控件都自行比对：下拉框的选择值语义（`null` 表示自动检测）无法用绑定表达，
         // 复选框若用绑定则由平台比对，会把“创建时已是勾选”的情况误判成已修改。
-        if ((hideWorkspaceDirCheckBox?.isSelected ?: hideWorkspaceDirResetValue) != hideWorkspaceDirResetValue) {
-            return true
-        }
+        if (isCheckBoxModified(hideWorkspaceDirCheckBox, hideWorkspaceDirResetValue)) return true
+        if (isCheckBoxModified(hideFolderPathCheckBox, hideFolderPathResetValue)) return true
         val files = findWorkspaceFiles(project)
         if (files.isEmpty()) return false // 只有占位选项，无可保存的配置源修改
         val selected = fileCombo?.selectedItem as? String
@@ -109,20 +118,27 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         }
     }
 
+    /** 未创建控件时按重置值兜底（此时没有可提交的改动）。 */
+    private fun isCheckBoxModified(checkBox: JCheckBox?, resetValue: Boolean): Boolean =
+        (checkBox?.isSelected ?: resetValue) != resetValue
+
     override fun apply() {
         // 占位选项或空选择不落盘（null = 自动检测）
         val selected = (fileCombo?.selectedItem as? String)?.takeIf { it.endsWith(WORKSPACE_SUFFIX) }
         val settings = getMrWorkspaceSettings(project)
         settings.state.selectedWorkspaceFile = selected
         settings.state.hideWorkspaceDirectory = hideWorkspaceDirCheckBox?.isSelected ?: false
+        settings.state.showFolderPath = !(hideFolderPathCheckBox?.isSelected ?: false)
         MrWorkspacePanes.refresh(project)
     }
 
     override fun reset() {
         fileCombo?.let { rebindCombo(it) }
-        val stored = getMrWorkspaceSettings(project).state.hideWorkspaceDirectory
-        hideWorkspaceDirResetValue = stored
-        hideWorkspaceDirCheckBox?.isSelected = stored
+        val state = getMrWorkspaceSettings(project).state
+        hideWorkspaceDirResetValue = state.hideWorkspaceDirectory
+        hideWorkspaceDirCheckBox?.isSelected = state.hideWorkspaceDirectory
+        hideFolderPathResetValue = !state.showFolderPath
+        hideFolderPathCheckBox?.isSelected = !state.showFolderPath
     }
 
     /**

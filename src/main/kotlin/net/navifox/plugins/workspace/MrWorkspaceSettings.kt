@@ -22,6 +22,13 @@ class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> 
 
         /** 自动隐藏与“当前工作区路径”（项目根目录）完全一致的顶层文件夹。默认不隐藏。 */
         var hideWorkspaceDirectory: Boolean = false
+
+        /**
+         * 显示顶层文件夹名称后方的相对路径（与名称同一行的灰色小字）。默认显示。
+         *
+         * 用法是“反向”的（勾选＝隐藏），以配合设置页里“不显示文件夹所在路径”的复选框文案。
+         */
+        var showFolderPath: Boolean = true
     }
 
     private var state = State()

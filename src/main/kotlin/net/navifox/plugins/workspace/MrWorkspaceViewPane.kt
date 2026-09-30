@@ -385,7 +385,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
      * [MrWorkspaceViewPane] 组件 顶层文件夹节点。
      *
      * - 显示 `*.code-workspace` 文件中的 `folders[].name`，如果没有则提取 `folders[].path` 的目录名称；
-     *   标题第二行（location）显示该 folder 相对项目根的路径。
+     *   与该 folder 相对项目根的路径（灰色小字，跟在名称后方同一行）。
      * - 子节点是“内容根去重 + 空骨架叶子化”的可见树（[MrVisibleDirectoryNode]），不是平台原始目录树。
      */
     private class MrWorkspaceTopFolderNode(
@@ -555,6 +555,8 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
             return emptyList()
         }
         val psiManager = PsiManager.getInstance(myProject)
+        // “不显示文件夹所在路径”：关掉时不给节点传路径文本（节点 update 里据此不设置 location）。
+        val showFolderPath = getMrWorkspaceSettings(myProject).state.showFolderPath
         // 相同目录（按解析后的真实路径比较，与 VS Code 一致）只保留首个声明。
         val workspacePath = workspace.file.path
         val seen = HashSet<String>()
@@ -584,7 +586,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                     myProject,
                     settings,
                     folder.name ?: folderPathBasename(folder.path),
-                    normalizedPathText(folder.path),
+                    normalizedPathText(folder.path).takeIf { showFolderPath },
                     index,
                 )
             } else {
@@ -597,7 +599,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                         psiDirectory,
                         settings,
                         displayName,
-                        relativeLocationText(directory),
+                        relativeLocationText(directory).takeIf { showFolderPath },
                         otherRootPaths,
                         index,
                     )
@@ -606,7 +608,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
                         myProject,
                         settings,
                         folder.name ?: folderPathBasename(folder.path),
-                        normalizedPathText(folder.path),
+                        normalizedPathText(folder.path).takeIf { showFolderPath },
                         index,
                     )
                 }
@@ -650,7 +652,7 @@ class MrWorkspaceViewPane(project: Project) : AbstractProjectViewPaneWithAsyncSu
     }
 
     /**
-     * 顶层标题第二行展示的路径文本：以项目根（深度 0）为基准 —— 项目内显示相对路径；
+     * 顶层标题里跟在名称后方的路径文本（灰色小字）：以项目根（深度 0）为基准 —— 项目内显示相对路径；
      * 项目外（上级目录）为避免前置一串 `../`，直接显示绝对路径；与根重合时返回 null 不显示。
      */
     private fun relativeLocationText(directory: VirtualFile): String? {
