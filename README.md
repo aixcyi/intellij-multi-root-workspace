@@ -4,14 +4,12 @@
 
 一个 JetBrains IDE 插件，可以在“项目”（Project）工具窗口中呈现像 VS Code 那样的工作区视图。
 
-![示意图](preview.webp)
-
-## 亮点
-
 - 同时展示多个文件夹，允许路径相互包含（原生的 **多工作区** 功能不允许这样子）。
 - 直接依赖 VS Code 配置文件 `*.code-workspace` 并支持在“设置”中切换用哪个。
 - 拥有与 JetBrains IDE 原生目录树一致的体验。
 - 支持多种语言文字。
+
+![示意图](preview.webp)
 
 ## 兼容
 
@@ -64,9 +62,71 @@
    └─ MrWorkspaceSettingsConfigurable.kt 设置页
 ```
 
-## 文档
+## 工作流
 
-### 插件开发相关参考
+1. 至少需要 JDK 21 或以上的版本。
+2. Windows 命令行用户请改用 `./gradlew.bat`，例如 `./gradlew.bat runIde`。
+3. IDEA 用户可以直接使用 `.run/` 下的运行配置来执行各个工作流。
+
+### 带插件运行IDE
+
+```shell
+./gradlew runIde
+```
+
+1. 默认使用 `./build.gradle.kts` 中 `dependencies.intellijPlatform` 块的 `webstorm("2025.3.5")` 这个IDE来运行。
+
+### 构建插件
+
+```shell
+./gradlew buildPlugin
+```
+
+1. 构建产物位于 `./build/distributions/` 。
+2. 构建过程包含了可搜索选项的构建（`buildSearchableOptions`），这一阶段要求沙盒界面语言为英文（`en`），否则会导致构建失败。
+
+### 运行测试
+
+```shell
+./gradlew check
+```
+
+1. `check` 是聚合验证任务，目前会先执行 `test`：大部分是纯 JUnit 用例（解析与路径）；另有冒烟用例会启动一次平台，验证插件类加载器能取到平台内置库。
+
+### 运行校验
+
+```shell
+./gradlew verifyPlugin
+```
+
+1. 用 IntelliJ Plugin Verifier 针对目标平台做兼容性校验，首次执行需要下载校验工具。
+
+### 清理
+
+```shell
+./gradlew clean
+```
+
+1. 清掉 `./build/` 下的构建产物，沙盒与 Gradle 缓存不受影响。
+
+### 清理沙盒
+
+```shell
+./gradlew cleanSandbox
+```
+
+1. 清掉 `./.intellijPlatform/sandbox/` 下的沙盒，界面语言、已打开的项目、日志与索引都会一并消失。
+
+### 插件签名与发布
+
+```shell
+./gradlew signPlugin
+./gradlew publishPlugin
+```
+
+1. 两者都需要凭据，通过环境变量提供：签名用 `CERTIFICATE_CHAIN`、`PRIVATE_KEY`、`PRIVATE_KEY_PASSWORD`，发布用 `PUBLISH_TOKEN`。
+
+## 参考
 
 - [IntelliJ Platform Plugin SDK](https://plugins.jetbrains.com/docs/intellij)
 - [IntelliJ Platform Gradle Plugin](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html)
