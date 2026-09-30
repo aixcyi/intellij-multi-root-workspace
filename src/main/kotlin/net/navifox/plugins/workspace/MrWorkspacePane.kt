@@ -457,7 +457,8 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
                 // 平台对项目外的目录不产子项（依赖项目索引）：改用 PSI 直接列出，保证任意路径的
                 // 外部 folder 也可浏览。
                 for (sub in value.subdirectories) {
-                    if (sub.virtualFile.path in otherRootPaths) continue
+                    // 与 otherRootPaths 同为“正斜杠绝对路径”（VirtualFile 本就用正斜杠，这里只是防御性统一）。
+                    if (sub.virtualFile.path.replace('\\', '/') in otherRootPaths) continue
                     result.add(MrVisibleDirectoryNode(this.project, sub, settings, otherRootPaths))
                 }
                 for (file in value.files) {
@@ -468,7 +469,8 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
                     if (child is PsiDirectoryNode) {
                         val dir = child.value ?: continue
                         val vf = dir.virtualFile
-                        if (vf.path in otherRootPaths) continue // 整棵被其它工作区文件夹覆盖
+                        // 同上：键与 VirtualFile 路径都按正斜杠比较，整棵被其它工作区文件夹覆盖时剪除。
+                        if (vf.path.replace('\\', '/') in otherRootPaths) continue
                         result.add(MrVisibleDirectoryNode(child.project, dir, settings, otherRootPaths))
                     } else {
                         result.add(child)
@@ -609,9 +611,10 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         }
         showEmptyText(null)
         // 所有可见工作区文件夹根目录的路径集合；作为子目录出现时视为“已被其它 folder 拥有”，整棵剪除。
+        // 键必须是 [absolutePathKey] 生成的“正斜杠绝对路径”，才能与 VirtualFile 的 path 比较（见该函数注释）。
         // 被隐藏的项目根不在其中——它的子目录解除剪除，会出现在包含它的其它根下；而“强制显示”补出来的
         // 项目根与显式声明一样在这里，因此**同样参与剪枝**：各顶层文件夹的展示内容互不重叠。
-        val otherRootPaths = visibleFolders.mapNotNull { (resolved, _) -> resolved?.path }.toSet()
+        val otherRootPaths = visibleFolders.mapNotNull { (resolved, _) -> resolved?.let(::absolutePathKey) }.toSet()
         return visibleFolders.mapIndexed { index, (resolved, folder) ->
             val directory = folder.directory
             if (directory == null) {
@@ -678,10 +681,6 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
             normalizeFolderPathKey(path)
         }
     }
-
-    /** 把 [File] 转成绝对规范化路径键（正斜杠、去 `..`／`.` 段），用于跨写法比较同一目录。 */
-    private fun absolutePathKey(file: File): String =
-        file.toPath().normalize().toAbsolutePath().toString().replace('\\', '/')
 
     /** 用于展示的路径文本：反斜杠归一、去掉前导 `./` 与尾部斜杠；根（`.` 或空）返回 null。 */
     private fun normalizedPathText(path: String): String? {
@@ -891,6 +890,16 @@ private object FillOverlayLayout : LayoutManager {
         }
     }
 }
+
+/**
+ * 把 [File] 转成**绝对规范化路径键**：正斜杠、已解析 `.`／`..`、绝对路径。
+ *
+ * 之所以不能直接用 [java.io.File.getPath]：Windows 上它是**反斜杠**，而 [VirtualFile.getPath] 一律是
+ * **正斜杠**，两者直接比较永远不相等（历史缺陷：内容根去重曾因此在 Windows 上完全失效）。
+ * 凡是拿路径当“目录身份”比较的地方（去重、剪枝、与项目根比对）都必须先过这个函数。
+ */
+internal fun absolutePathKey(file: File): String =
+    file.toPath().normalize().toAbsolutePath().toString().replace('\\', '/')
 
 /** 供设置页在 apply 后触发当前项目里所有已创建面板刷新。 */
 internal object MrWorkspacePanes {

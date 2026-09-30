@@ -25,10 +25,12 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 ### 修复
 
 - 修正通知组 ID 与 `plugin.xml` 中注册值不一致的问题：此前项目根目录下存在多个 `*.code-workspace` 文件时，自动选用文件的气泡提示不会出现（该分支使用了未注册的通知组，会抛出异常）。
+- 修复“内容根去重”在 Windows 上的失效：剪枝比较此前混用了反斜杠（`java.io.File.path`）与正斜杠（`VirtualFile.path`）两种写法，导致已被另一个工作区文件夹覆盖的子树仍会完整展开；现在统一按绝对规范化路径比较，被覆盖的目录只留下一个不可展开的文件夹节点。
 
 ### Fixed
 
 - Fix the notification group ID not matching the value registered in `plugin.xml`: the balloon that reports which `*.code-workspace` file was picked automatically never appeared when the project root contained several of them (that branch used an unregistered notification group and threw an exception).
+- Fix content-root de-duplication on Windows: the pruning comparison mixed backslash (`java.io.File.path`) and forward-slash (`VirtualFile.path`) forms, so a subtree covered by another workspace folder was still expanded in place. Paths are now compared as normalized absolute keys, and a covered directory shows up as a single non-expandable folder node.
 
 ### 变更
 
