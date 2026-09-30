@@ -81,18 +81,16 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         fileCombo = combo
 
         return panel {
+            row(NavifoxMessageBundle.message("settings.tools.MrWorkspace.sourceLabel")) {
+                cell(combo)
+                    .align(AlignX.FILL)
+                    .resizableColumn()
+            }
             group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.display")) {
-                row(NavifoxMessageBundle.message("settings.tools.MrWorkspace.sourceLabel")) {
-                    cell(combo)
-                        .align(AlignX.FILL)
-                        .resizableColumn()
-                }
                 row {
                     checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideWorkspaceDirectory"))
                         .also { hideWorkspaceDirCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
-                // 文案里的“所在路径”本意是像面板里那个灰色路径后缀那样染灰，但平台 UI DSL 的复选框只吃
-                // 纯文本，而“复选框 + 独立灰字标签”会被布局压到只剩两个字宽，因此按约定退回单行纯文本。
                 row {
                     checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFolderPath"))
                         .also { hideFolderPathCheckBox = it.component }
