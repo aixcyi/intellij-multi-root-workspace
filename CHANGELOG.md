@@ -18,11 +18,11 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ### Added
 
-- Add a "Do Not Remind Me About Multiple *.code-workspace Files" option; the balloon shown when a file is picked automatically now offers a "Don't Remind Again" link that enables the option and stops further reminders.
+- Add a "Do not remind me about multiple *.code-workspace files" option; the balloon shown when a file is picked automatically now offers a "Do not remind me again" link that enables the option and stops further reminders.
 - Add a short note below the workspace source file selector describing the `*.code-workspace` format and origin, with a link to the VS Code documentation.
 - The top-level folder matching the current workspace path (the project root) now shows a gray "Current Workspace" label after its name instead of nothing.
-- Add a "Force the Current Workspace Directory to Be Shown" option to the "Display" group: when enabled and the workspace file does not declare the current workspace directory, a folder for it is appended at the end of the list. It is mutually exclusive with "Hide the Current Workspace Directory Automatically" (checking one clears the other; both may stay unchecked).
-- Add a "Folders" menu (a submenu in the tool window header, shortcut **Alt+F2**): pick a single top-level folder to show (all other top-level folders are hidden and the picked directory is expanded), or pick "Show All Folders" at the top to restore everything. Like the Alt+F1 "Select In" menu, its items carry `1`~`9`, `0`, `A`~`Z` quick-select numbering. The selection is kept in memory only and resets to "Show All Folders" after an IDE restart or when the project is reopened.
+- Add a "Force the 'Current Workspace' directory to be shown" option to the "Display" group: when enabled and the workspace file does not declare the current workspace directory, a folder for it is appended at the end of the list. It is mutually exclusive with "Hide the 'Current Workspace' directory automatically" (checking one clears the other; both may stay unchecked).
+- Add a "Folders" menu (a submenu in the tool window header, shortcut **Alt+F2**): pick a single top-level folder to show (all other top-level folders are hidden and the picked directory is expanded), or pick "Show all folders" at the top to restore everything. Like the Alt+F1 "Select In" menu, its items carry `1`~`9`, `0`, `A`~`Z` quick-select numbering. The selection is kept in memory only and resets to "Show all folders" after an IDE restart or when the project is reopened.
 
 ### 修复
 
@@ -36,11 +36,13 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ### 变更
 
+- 统一英文文案的句式大小写：设置页的复选框与“文件夹”菜单等条目改用句子式大写（如 “Hide the folder location”），与 IntelliJ 平台自身控件的写法一致；顺带修正一处提示文案引用了错误设置项名的问题。
 - **破坏性变更**：插件 ID 由 `net.navifox.plugins.multi-root-workspace-view` 改为 `net.navifox.plugins.mr-workspace`。IDE 会把二者视为两个不同的插件，升级前请先卸载旧插件再安装新版本，旧插件也不会再收到更新；构建产物名随之改为 `mr-workspace-<version>.zip`。
 - 统一内部标识符：面板类 `MrWorkspaceViewPane` 更名为 `MrWorkspacePane`，面板 ID 与项目级设置的持久化名改用更短的 `MrWorkspace` 前缀。这些标识写在项目的 `workspace.xml` 中，升级后“项目”工具窗口会回到原生“项目”面板（需重新选择“多根工作区”视图，其此前保存的展开状态不再保留），各项目在设置页选定的“多根工作区目录配置源”与两个显示选项（“自动隐藏当前工作区目录”“不显示文件夹所在路径”）同样恢复默认。
 
 ### Changed
 
+- Unify English copy to sentence case: checkboxes on the settings page and entries such as the "Folders" menu now follow the capitalization used by IntelliJ Platform controls themselves (for example, "Hide the folder location"); a message that referenced a setting by the wrong name is fixed as well.
 - **Breaking change**: the plugin ID changes from `net.navifox.plugins.multi-root-workspace-view` to `net.navifox.plugins.mr-workspace`. IDEs treat the two as separate plugins, so uninstall the old plugin before installing this release, and the old plugin will no longer receive updates; the distribution file is renamed to `mr-workspace-<version>.zip` as well.
 - Unify internal identifiers: the pane class `MrWorkspaceViewPane` is renamed to `MrWorkspacePane`, and the pane ID with the project-level settings state name now use the shorter `MrWorkspace` prefix. These identifiers are stored in the project's `workspace.xml`, so after upgrading the Project tool window falls back to the native Project pane (the "Workspace (Multi-Root)" view must be selected again and its previously saved expansion state is discarded), and each project's "Workspace source file" setting plus the two display options ("Hide the Current Workspace Directory Automatically", "Hide the Folder Location") also return to their defaults.
 
