@@ -78,7 +78,7 @@ internal class MrWorkspaceFoldersMenuData(
  *   `createActionGroupPopup` 弹出同一份列表，与 Alt＋F1“在…中选中”**同一套机制**。
  *
  * 编号交给平台的 `ActionSelectionAid.ALPHA_NUMBERING`（`NumericMnemonicItem` 那套数字助记）：
- * 选项文本里**不带**编号，平台按 `1`~`9`、`0`、`A`… 自动分配助记键。
+ * 选项文本里**不带**编号，平台按 `1` 至 `9`、`0`、`A`… 自动分配助记键。
  */
 internal class MrWorkspaceFoldersMenuAction : DefaultActionGroup(
     NavifoxMessageBundle.message("MrWorkspacePane.folders"),
@@ -161,7 +161,7 @@ internal fun createFoldersPopup(
             NavifoxMessageBundle.message("MrWorkspacePane.folders"),
             DefaultActionGroup().apply { addAll(folderMenuActions(data, activateToolWindow)) },
             dataContext,
-            // ALPHA_NUMBERING：与 Alt＋F1 同一套编号（1~9、0、A…），助记符由平台分配，项文本里不带编号。
+            // ALPHA_NUMBERING：与 Alt＋F1 同一套编号（1 至 9、0、A…），助记符由平台分配，项文本里不带编号。
             JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
             false, // 不显示被禁用的项（这里的项永远可用）。
             null,
