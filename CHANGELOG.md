@@ -8,6 +8,8 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-04
+
 ### 新增
 
 - 新增“不再提醒有多个 *.code-workspace 文件可以切换”设置项；自动选用文件时弹出的气泡提示里也加了“不再提醒”链接，点一下即勾选该设置，之后不再提示。
