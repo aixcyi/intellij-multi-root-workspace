@@ -1,8 +1,8 @@
-# Multi-Root Workspace View
+# Multi-Root Workspace
 
 中文／[English](README.en.md)
 
-一个 JetBrains IDE 插件，可以在“项目”工具窗口（Project，Alt+F1）中呈现像 VS Code 那样的工作区视图。
+一个 JetBrains IDE 插件，可以在“项目”工具窗口（Project，Alt+F1）中呈现像 VS Code 那样的工作区。
 
 - 同时展示多个文件夹，允许路径相互包含（原生的 **多工作区** 功能不允许这样子）。
 - 允许切换某个文件夹。

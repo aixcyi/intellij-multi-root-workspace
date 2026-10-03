@@ -67,7 +67,7 @@ import javax.swing.Timer
 import javax.swing.tree.DefaultTreeModel
 
 /**
- * 多根工作区视图。
+ * 多根工作区。
  *
  * 提供一个像 Visual Studio Code 那样的、可以同时显示多个不同根目录的文件夹的
  * [工作区目录](https://code.visualstudio.com/docs/editing/workspaces/workspaces)，并且操作体验与

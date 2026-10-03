@@ -40,12 +40,14 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ### 变更
 
+- 插件显示名由 `Multi-Root Workspace View` 改为 `Multi-Root Workspace`：一并调整英文设置页标题（工具 → Multi-Root Workspace）、市场描述与中英 README 里的同类措辞；插件 ID 未变，已安装用户可照常升级。
 - 统一英文文案的句式大小写：设置页的复选框与“文件夹”菜单等条目改用句子式大写（如 “Hide the folder location”），与 IntelliJ 平台自身控件的写法一致；顺带修正一处提示文案引用了错误设置项名的问题。
 - **破坏性变更**：插件 ID 由 `net.navifox.plugins.multi-root-workspace-view` 改为 `net.navifox.plugins.mr-workspace`。IDE 会把二者视为两个不同的插件，升级前请先卸载旧插件再安装新版本，旧插件也不会再收到更新；构建产物名随之改为 `mr-workspace-<version>.zip`。
 - 统一内部标识符：面板类 `MrWorkspaceViewPane` 更名为 `MrWorkspacePane`，面板 ID 与项目级设置的持久化名改用更短的 `MrWorkspace` 前缀。这些标识写在项目的 `workspace.xml` 中，升级后“项目”工具窗口会回到原生“项目”面板（需重新选择“多根工作区”视图，其此前保存的展开状态不再保留），各项目在设置页选定的“多根工作区目录配置源”与两个显示选项（“自动隐藏当前工作区目录”“不显示文件夹所在路径”）同样恢复默认。
 
 ### Changed
 
+- The plugin display name changes from `Multi-Root Workspace View` to `Multi-Root Workspace`, along with the English settings page title (Tools -> Multi-Root Workspace), the marketplace description and the same wording in both READMEs. Its ID is unchanged, so existing installations upgrade as usual.
 - Unify English copy to sentence case: checkboxes on the settings page and entries such as the "Folders" menu now follow the capitalization used by IntelliJ Platform controls themselves (for example, "Hide the folder location"); a message that referenced a setting by the wrong name is fixed as well.
 - **Breaking change**: the plugin ID changes from `net.navifox.plugins.multi-root-workspace-view` to `net.navifox.plugins.mr-workspace`. IDEs treat the two as separate plugins, so uninstall the old plugin before installing this release, and the old plugin will no longer receive updates; the distribution file is renamed to `mr-workspace-<version>.zip` as well.
 - Unify internal identifiers: the pane class `MrWorkspaceViewPane` is renamed to `MrWorkspacePane`, and the pane ID with the project-level settings state name now use the shorter `MrWorkspace` prefix. These identifiers are stored in the project's `workspace.xml`, so after upgrading the Project tool window falls back to the native Project pane (the "Workspace (Multi-Root)" view must be selected again and its previously saved expansion state is discarded), and each project's "Workspace source file" setting plus the two display options ("Hide the Current Workspace Directory Automatically", "Hide the Folder Location") also return to their defaults.
@@ -113,7 +115,7 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 - 缺失/无法解析的 folder 以警示节点展示；项目外目录仍可浏览（PSI 回退）。
 - 保持与原生 Project 树一致的操作：右键菜单、拖拽、速度搜索、排序依据、Alt+F1“在视图中选择”定位。
 - 无可用配置（无文件或全部解析失败）时显示空态覆盖层与“创建配置文件”按钮；创建走保存对话框并写入本地化模板后打开编辑。
-- 新增设置页（工具 → 多根工作区视图）选择使用的配置文件；无配置时显示不落盘的“（无可用配置文件）”占位。
+- 新增设置页（工具 → 多根工作区）选择使用的配置文件；无配置时显示不落盘的“（无可用配置文件）”占位。
 - 存在多个配置文件并自动选用一个时气泡提醒一次。
 - 界面支持英文与简体中文（消息资源包）。
 
@@ -124,6 +126,6 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 - Show missing/unparseable folders as warning nodes and keep folders outside the project browsable (PSI fallback).
 - Keep native Project-tree behavior: context menus, drag & drop, speed search, sorting options, and Alt+F1 "Select in" navigation.
 - Add an empty-state overlay with a "Create Configuration File" button when no usable configuration exists; creation goes through a Save dialog and writes a localized `.code-workspace` template, then opens it in the editor.
-- Add a Settings page (Tools -> Multi-Root Workspace View) to choose the configuration file; when none exists it shows a non-persisted "（无可用配置文件）" placeholder.
+- Add a Settings page (Tools -> Multi-Root Workspace) to choose the configuration file; when none exists it shows a non-persisted "（无可用配置文件）" placeholder.
 - Notify once when multiple configuration files exist and one is auto-picked.
 - Support English and Simplified Chinese UI (message bundles).

@@ -1,8 +1,8 @@
-# Multi-Root Workspace View
+# Multi-Root Workspace
 
 [中文](README.md) / English
 
-A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "Project" tool window (Alt+F1).
+A JetBrains IDE plugin that renders a VS Code-style workspace inside the "Project" tool window (Alt+F1).
 
 - Shows multiple folders at once, and their paths may even nest inside one another — something the native **multi-workspace** feature does not allow.
 - Lets you switch to a single folder.

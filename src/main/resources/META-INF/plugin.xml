@@ -4,7 +4,7 @@
     <id>net.navifox.plugins.mr-workspace</id>
 
     <!-- 插件名称。https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
-    <name>Multi-Root Workspace View</name>
+    <name>Multi-Root Workspace</name>
 
     <!-- 插件作者。在插件页会显示的供应商名称或组织ID -->
     <vendor url="https://www.navifox.net">Navifox</vendor>
