@@ -1,5 +1,6 @@
 package net.navifox.plugins.workspace
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionUpdateThreadAware
@@ -211,6 +212,20 @@ private class SelectionAction(
 ) : DumbAwareAction(label), ActionUpdateThreadAware {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    /**
+     * 给“当前正在显示”的那一项打勾：过滤中时是被选中的那个文件夹，未过滤时是“显示所有文件夹”。
+     *
+     * 用**图标**而非 `ToggleAction`：`Alt＋F2` 与小组件走 `JBPopupFactory.createActionGroupPopup`，
+     * 那条路径（`ActionPopupStep`／`PopupFactoryImpl`）不识别 `Toggleable`，原生复选框不会出现
+     * （已 javap 核实：只有菜单路径的 `ActionMenuItem` 处理它）；而图标槽两条路径都会渲染。
+     */
+    override fun update(e: AnActionEvent) {
+        val selected = getMrWorkspaceFolderFilter(project).selectedFolderKey
+        val checked = if (key == MrWorkspaceFoldersMenuData.ALL_FOLDERS_KEY) selected == null else selected == key
+        e.presentation.icon = if (checked) AllIcons.Actions.Checked else null
+        e.presentation.selectedIcon = if (checked) AllIcons.Actions.Checked else null
+    }
 
     override fun actionPerformed(e: AnActionEvent) {
         applySelection(

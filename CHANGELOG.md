@@ -14,7 +14,7 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 - 设置页“配置源”下方新增一行小字说明，介绍 `*.code-workspace` 的格式与来源，并附上 VS Code 官方文档链接。
 - 顶层文件夹中与当前工作区路径（项目根）相同的那一个，现在会在名称后方显示灰色的“当前工作区”标记（此前该位置为空）。
 - “显示”分组新增“强制显示当前工作区目录”复选框：勾选后，若配置文件没有声明当前工作区目录，插件会自动补一个文件夹放到列表尾部；它与“自动隐藏当前工作区目录”互斥，勾选一个会自动取消另一个，二者也可以都不勾选。
-- 新增“文件夹”菜单（工具窗口头部的子菜单，快捷键 **Alt＋F2**）：可以选择只看某一个顶层文件夹（其余顶层文件夹全部隐藏，并自动展开该目录），也可以选最前面的“显示所有文件夹”恢复原状；菜单项与 Alt＋F1“在…中选中”一样带 `1`~`9`、`0`、`A`~`Z` 的快速选择编号。该选择只记在内存中，重启 IDE 或重新打开项目后恢复为“显示所有”。
+- 新增“文件夹”菜单（工具窗口头部的子菜单，快捷键 **Alt＋F2**）：可以选择只看某一个顶层文件夹（其余顶层文件夹全部隐藏，并自动展开该目录），也可以选最前面的“显示所有文件夹”恢复原状；菜单项与 Alt＋F1“在…中选中”一样带 `1`~`9`、`0`、`A`~`Z` 的快速选择编号。该选择只记在内存中，重启 IDE 或重新打开项目后恢复为“显示所有”；菜单里当前正在显示的那一项带勾选标记，未过滤时勾在“显示所有文件夹”上。
 - 主工具栏（New UI）左侧新增“文件夹”小组件（紧邻 Project Widget）：平时显示当前只看哪个顶层文件夹（“显示所有”时显示“所有文件夹”），点开后是与工具窗口头部完全相同的文件夹列表，选中一个即激活“项目”工具窗口并切换到“多根工作区”视图、只看该文件夹。项目里没有任何 `*.code-workspace` 文件时该小组件不出现。
 - 设置页“显示”分组新增“隐藏主工具栏上的‘文件夹’小组件”，用不上这个入口的项目可以把它彻底关掉。
 
@@ -24,7 +24,7 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 - Add a short note below the workspace source file selector describing the `*.code-workspace` format and origin, with a link to the VS Code documentation.
 - The top-level folder matching the current workspace path (the project root) now shows a gray "Current Workspace" label after its name instead of nothing.
 - Add a "Force the 'Current Workspace' directory to be shown" option to the "Display" group: when enabled and the workspace file does not declare the current workspace directory, a folder for it is appended at the end of the list. It is mutually exclusive with "Hide the 'Current Workspace' directory automatically" (checking one clears the other; both may stay unchecked).
-- Add a "Folders" menu (a submenu in the tool window header, shortcut **Alt+F2**): pick a single top-level folder to show (all other top-level folders are hidden and the picked directory is expanded), or pick "Show all folders" at the top to restore everything. Like the Alt+F1 "Select In" menu, its items carry `1`~`9`, `0`, `A`~`Z` quick-select numbering. The selection is kept in memory only and resets to "Show all folders" after an IDE restart or when the project is reopened.
+- Add a "Folders" menu (a submenu in the tool window header, shortcut **Alt+F2**): pick a single top-level folder to show (all other top-level folders are hidden and the picked directory is expanded), or pick "Show all folders" at the top to restore everything. Like the Alt+F1 "Select In" menu, its items carry `1`~`9`, `0`, `A`~`Z` quick-select numbering. The selection is kept in memory only and resets to "Show all folders" after an IDE restart or when the project is reopened; the entry currently being shown carries a checkmark, and while nothing is filtered the checkmark sits on "Show all folders".
 - Add a "Folders" widget to the left side of the main toolbar (New UI), right next to the Project widget: it shows which top-level folder is currently being shown (or "All folders"), and opening it lists exactly the same folders as the tool window header. Picking one activates the Project tool window, switches to the "Workspace (Multi-Root)" view and shows only that folder. The widget is not shown when the project has no `*.code-workspace` file.
 - Add a "Hide the 'Folders' widget in the main toolbar" option to the "Display" group of the settings page, for projects that do not need this shortcut at all.
 
