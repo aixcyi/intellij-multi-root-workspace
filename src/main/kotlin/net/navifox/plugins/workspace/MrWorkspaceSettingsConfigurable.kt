@@ -1,5 +1,6 @@
 package net.navifox.plugins.workspace
 
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -57,11 +58,15 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
     /** “不再提醒有多个配置文件可以切换”复选框；同上（气泡里的同名链接也会写这个值）。 */
     private var neverNotifyCheckBox: JCheckBox? = null
 
+    /** “隐藏工具栏上的‘文件夹’小组件”复选框；同上。 */
+    private var hideFoldersWidgetCheckBox: JCheckBox? = null
+
     /** 各复选框创建时对应的已保存状态，用于判断当前是否被改动。 */
     private var hideWorkspaceDirResetValue: Boolean = false
     private var hideFolderPathResetValue: Boolean = false
     private var forceShowWorkspaceDirResetValue: Boolean = false
     private var neverNotifyResetValue: Boolean = false
+    private var hideFoldersWidgetResetValue: Boolean = false
 
     override fun getId(): String = ID
 
@@ -120,6 +125,10 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
                     checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFolderPath"))
                         .also { hideFolderPathCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
+                row {
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFoldersWidget"))
+                        .also { hideFoldersWidgetCheckBox = it.component }
+                }.layout(RowLayout.PARENT_GRID)
             }
             group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.notification")) {
                 row {
@@ -147,6 +156,7 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         if (isCheckBoxModified(forceShowWorkspaceDirCheckBox, forceShowWorkspaceDirResetValue)) return true
         if (isCheckBoxModified(hideFolderPathCheckBox, hideFolderPathResetValue)) return true
         if (isCheckBoxModified(neverNotifyCheckBox, neverNotifyResetValue)) return true
+        if (isCheckBoxModified(hideFoldersWidgetCheckBox, hideFoldersWidgetResetValue)) return true
         val files = findWorkspaceFiles(project)
         if (files.isEmpty()) return false // 只有占位选项，无可保存的配置源修改
         val selected = fileCombo?.selectedItem as? String
@@ -171,9 +181,13 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         settings.state.hideWorkspaceDirectory = hideWorkspaceDirCheckBox?.isSelected ?: false
         settings.state.forceShowWorkspaceDirectory = forceShowWorkspaceDirCheckBox?.isSelected ?: false
         settings.state.showFolderPath = !(hideFolderPathCheckBox?.isSelected ?: false)
+        settings.state.hideFoldersWidget = hideFoldersWidgetCheckBox?.isSelected ?: false
         // 控件不存在时不写这个值：气泡里的“不再提醒”可能刚把它置为 true，别在这里被覆盖掉。
         neverNotifyCheckBox?.let { settings.state.neverNotifyMultipleWorkspaceFiles = it.isSelected }
         MrWorkspacePanes.refresh(project)
+        // 小组件的显示/隐藏由它自己的 update() 决定，改完设置要让主工具栏立刻重新算一遍，
+        // 否则要等下一次工具栏刷新事件（切窗口、点工具栏等）才会生效。
+        ActionToolbarImpl.updateAllToolbarsImmediately()
     }
 
     override fun reset() {
@@ -187,6 +201,8 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         hideFolderPathCheckBox?.isSelected = !state.showFolderPath
         neverNotifyResetValue = state.neverNotifyMultipleWorkspaceFiles
         neverNotifyCheckBox?.isSelected = state.neverNotifyMultipleWorkspaceFiles
+        hideFoldersWidgetResetValue = state.hideFoldersWidget
+        hideFoldersWidgetCheckBox?.isSelected = state.hideFoldersWidget
     }
 
     /**

@@ -48,6 +48,13 @@ class MrWorkspaceSettings : PersistentStateComponent<MrWorkspaceSettings.State> 
          * 自动选用文件时弹出的气泡就此静默；气泡里的“不再提醒”链接与设置页的同名复选框写的是同一个值。
          */
         var neverNotifyMultipleWorkspaceFiles: Boolean = false
+
+        /**
+         * 隐藏主工具栏（New UI）左侧的“文件夹”小组件。默认显示。
+         *
+         * 小组件只是本视图的快捷入口，用不上它的用户可以彻底关掉；项目里没有 `*.code-workspace` 时它本来也不出现。
+         */
+        var hideFoldersWidget: Boolean = false
     }
 
     private var state = State()

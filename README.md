@@ -2,11 +2,14 @@
 
 中文／[English](README.en.md)
 
-一个 JetBrains IDE 插件，可以在“项目”（Project）工具窗口中呈现像 VS Code 那样的工作区视图。
+一个 JetBrains IDE 插件，可以在“项目”工具窗口（Project，Alt+F1）中呈现像 VS Code 那样的工作区视图。
 
 - 同时展示多个文件夹，允许路径相互包含（原生的 **多工作区** 功能不允许这样子）。
+- 允许切换某个文件夹。
+- 快捷键 `Alt + F2` 快速切换。
 - 直接依赖 VS Code 配置文件 `*.code-workspace` 并支持在“设置”中切换用哪个。
 - 拥有与 JetBrains IDE 原生目录树一致的体验。
+- 主工具栏（New UI）左侧提供“文件夹”小组件。
 - 支持多种语言文字。
 
 ![示意图](preview.webp)
@@ -56,7 +59,9 @@
 │  └─ MrWorkspaceSelector.kt             文件发现/选定/顺延加载
 └─ workspace/                            特性 UI 层
    ├─ MrWorkspacePane.kt                 面板主类（含空态覆盖层）
+   ├─ MrWorkspaceFolderModel.kt          顶层文件夹的唯一真相（加载/去重/隐藏/展示信息）
    ├─ MrWorkspaceFoldersMenu.kt          “文件夹”菜单（Alt＋F2，顶层文件夹过滤）
+   ├─ MrWorkspaceFoldersWidgetAction.kt  主工具栏（New UI）“文件夹”小组件
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 定位目标
    ├─ MrWorkspaceConfigCreator.kt        新建配置流程（保存对话框 + 模板）
    ├─ MrWorkspaceSettings.kt             项目级设置

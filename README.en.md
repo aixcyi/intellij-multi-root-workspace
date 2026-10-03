@@ -2,11 +2,14 @@
 
 [中文](README.md) / English
 
-A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "Project" (Project) tool window.
+A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "Project" tool window (Alt+F1).
 
 - Shows multiple folders at once, and their paths may even nest inside one another — something the native **multi-workspace** feature does not allow.
+- Lets you switch to a single folder.
+- Shortcut `Alt + F2` for quick switching.
 - Reads VS Code `.code-workspace` configuration files directly, and lets you switch between them in "Settings".
 - Feels and behaves like the native JetBrains IDE directory tree.
+- Adds a "Folders" widget to the left side of the main toolbar (New UI).
 - Supports multiple languages.
 
 ![Screenshot](preview.webp)
@@ -56,7 +59,9 @@ A JetBrains IDE plugin that renders a VS Code-style workspace view inside the "P
 │  └─ MrWorkspaceSelector.kt             discovery / selection / fallback loading
 └─ workspace/                            feature UI layer
    ├─ MrWorkspacePane.kt                 main pane class (incl. empty-state overlay)
+   ├─ MrWorkspaceFolderModel.kt          single source of truth for top-level folders (loading / de-duplication / hiding / presentation)
    ├─ MrWorkspaceFoldersMenu.kt          "Folders" menu (Alt+F2, top-level folder filter)
+   ├─ MrWorkspaceFoldersWidgetAction.kt  "Folders" widget in the main toolbar (New UI)
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 select-in target
    ├─ MrWorkspaceConfigCreator.kt        "create configuration" flow (save dialog + template)
    ├─ MrWorkspaceSettings.kt             project-level settings

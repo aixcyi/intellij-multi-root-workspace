@@ -38,6 +38,16 @@
                 icon="AllIcons.Nodes.Workspace">
             <keyboard-shortcut keymap="$default" first-keystroke="alt F2" />
         </action>
+
+        <!--
+            主工具栏（New UI）左侧的小组件：紧跟在 Project Widget 之后，点开是与工具窗口头部一致的
+            “文件夹”列表，选中后激活工具窗口并过滤到该文件夹（New UI 的工具栏分组是 MainToolbarLeft）。
+        -->
+        <action id="MrWorkspace.FoldersWidget"
+                class="net.navifox.plugins.workspace.MrWorkspaceFoldersWidgetAction"
+                icon="AllIcons.Nodes.Workspace">
+            <add-to-group group-id="MainToolbarLeft" anchor="after" relative-to-action="main.toolbar.Project" />
+        </action>
     </actions>
 
 </idea-plugin>
