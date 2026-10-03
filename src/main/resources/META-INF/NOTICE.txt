@@ -1,0 +1,7 @@
+本插件包含来自 IntelliJ IDEA（IntelliJ Platform）的图标资源（src/main/resources/icons/ 下的
+workspace*.svg），依据 Apache License 2.0 使用；许可证副本见同目录的 LICENSE-APACHE-2.0.txt。
+以下为上游 NOTICE 原文（https://github.com/JetBrains/intellij-community 的 NOTICE.txt）：
+
+This software includes code from IntelliJ IDEA
+Copyright (C) JetBrains s.r.o.
+https://www.jetbrains.com/idea/

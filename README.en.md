@@ -40,6 +40,7 @@ A JetBrains IDE plugin that renders a VS Code-style workspace inside the "Projec
 │       ├── kotlin/          Source code (Kotlin)
 │       └── resources/       Plugin resources
 │           ├── META-INF/    Plugin configuration and icons
+│           ├── icons/       Icons used by the plugin
 │           └── messages/    Message bundles
 ├── .gitignore               Git ignore rules
 ├── build.gradle.kts         Gradle build configuration
@@ -47,6 +48,7 @@ A JetBrains IDE plugin that renders a VS Code-style workspace inside the "Projec
 ├── gradlew                  Gradle wrapper script (*nix)
 ├── gradlew.bat              Gradle wrapper script (Windows)
 ├── README.md                This file
+├── THIRD-PARTY-NOTICES.md   Third-party components and license notices
 └── settings.gradle.kts      Gradle settings
 ```
 
@@ -62,6 +64,7 @@ A JetBrains IDE plugin that renders a VS Code-style workspace inside the "Projec
    ├─ MrWorkspaceFolderModel.kt          single source of truth for top-level folders (loading / de-duplication / hiding / presentation)
    ├─ MrWorkspaceFoldersMenu.kt          "Folders" menu (Alt+F2, top-level folder filter)
    ├─ MrWorkspaceFoldersWidgetAction.kt  "Folders" widget in the main toolbar (New UI)
+   ├─ MrWorkspaceIcons.kt                loader for the icons used by the plugin
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 select-in target
    ├─ MrWorkspaceConfigCreator.kt        "create configuration" flow (save dialog + template)
    ├─ MrWorkspaceSettings.kt             project-level settings

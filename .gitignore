@@ -10,6 +10,7 @@
 !/README.md
 !/README.*.md
 !/CHANGELOG.md
+!/THIRD-PARTY-NOTICES.md
 
 # Environment
 /.venv/

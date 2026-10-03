@@ -1,6 +1,5 @@
 package net.navifox.plugins.workspace
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionUpdateThreadAware
@@ -86,8 +85,8 @@ internal class MrWorkspaceFoldersMenuAction : DefaultActionGroup(
 ), DumbAware, ActionUpdateThreadAware {
 
     init {
-        // 与工具窗口下拉框里的面板图标一致（多文件夹），便于一眼认出这是“多根工作区”的菜单。
-        templatePresentation.icon = AllIcons.Nodes.Workspace
+        // 与工具窗口下拉框里的面板图标一致（文件夹 ＋ 修饰角标），便于一眼认出这是“多根工作区”的菜单。
+        templatePresentation.icon = MrWorkspaceIcons.plugin
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -124,7 +123,7 @@ internal class MrWorkspaceFoldersMenuAction : DefaultActionGroup(
 internal class MrFoldersMenuAction : DumbAwareAction(
     NavifoxMessageBundle.message("MrWorkspacePane.folders"),
     NavifoxMessageBundle.message("MrWorkspacePane.folders.description"),
-    AllIcons.Nodes.Workspace,
+    MrWorkspaceIcons.plugin,
 ), ActionUpdateThreadAware {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

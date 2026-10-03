@@ -1,6 +1,5 @@
 package net.navifox.plugins.workspace
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionUpdateThreadAware
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -33,7 +32,7 @@ internal class MrWorkspaceFoldersWidgetAction : ExpandableComboAction(), DumbAwa
         templatePresentation.text = NavifoxMessageBundle.message("MrWorkspacePane.folders")
         templatePresentation.description =
             NavifoxMessageBundle.message("MrWorkspacePane.foldersWidget.description")
-        templatePresentation.icon = AllIcons.Nodes.Workspace
+        templatePresentation.icon = MrWorkspaceIcons.widget
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -53,7 +52,7 @@ internal class MrWorkspaceFoldersWidgetAction : ExpandableComboAction(), DumbAwa
         e.presentation.isVisible = !getMrWorkspaceSettings(project).state.hideFoldersWidget &&
             findWorkspaceFiles(project).isNotEmpty()
         e.presentation.isEnabled = true
-        e.presentation.icon = AllIcons.Nodes.Workspace
+        e.presentation.icon = MrWorkspaceIcons.widget
         e.presentation.setText(
             getMrWorkspaceFolderFilter(project).selectedFolderName
                 ?: NavifoxMessageBundle.message("MrWorkspacePane.foldersWidget.all"),

@@ -40,6 +40,7 @@
 │       ├── kotlin/         源代码，Kotlin 编写
 │       └── resources/      插件资源文件
 │           ├── META-INF/   插件配置文件和图标
+│           ├── icons/      插件所用图标
 │           └── messages/   文本资源包
 ├── .gitignore              Git 忽略规则
 ├── build.gradle.kts        Gradle 构建配置
@@ -47,6 +48,7 @@
 ├── gradlew                 *nix 系统下的 Gradle 包装器脚本
 ├── gradlew.bat             Windows 系统下的 Gradle 包装器脚本
 ├── README.md               本文件
+├── THIRD-PARTY-NOTICES.md  第三方组件与许可声明
 └── settings.gradle.kts     Gradle 项目设置
 ```
 
@@ -62,6 +64,7 @@
    ├─ MrWorkspaceFolderModel.kt          顶层文件夹的唯一真相（加载/去重/隐藏/展示信息）
    ├─ MrWorkspaceFoldersMenu.kt          “文件夹”菜单（Alt＋F2，顶层文件夹过滤）
    ├─ MrWorkspaceFoldersWidgetAction.kt  主工具栏（New UI）“文件夹”小组件
+   ├─ MrWorkspaceIcons.kt                插件所用图标的加载器
    ├─ MrWorkspaceSelectInTarget.kt       Alt+F1 定位目标
    ├─ MrWorkspaceConfigCreator.kt        新建配置流程（保存对话框 + 模板）
    ├─ MrWorkspaceSettings.kt             项目级设置

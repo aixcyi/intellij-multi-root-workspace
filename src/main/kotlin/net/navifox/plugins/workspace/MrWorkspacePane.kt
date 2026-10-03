@@ -118,7 +118,7 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
 
     override fun getId(): String = ID
 
-    override fun getIcon(): Icon = AllIcons.Nodes.Workspace
+    override fun getIcon(): Icon = MrWorkspaceIcons.plugin
 
     override fun getWeight(): Int = 1
 
@@ -429,7 +429,7 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         }
 
         override fun update(presentation: PresentationData) {
-            presentation.setIcon(AllIcons.Nodes.Workspace)
+            presentation.setIcon(MrWorkspaceIcons.plugin)
             presentation.setPresentableText(NavifoxMessageBundle.message("MrWorkspacePane.title"))
         }
 

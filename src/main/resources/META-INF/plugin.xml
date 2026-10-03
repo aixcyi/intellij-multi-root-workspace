@@ -31,21 +31,18 @@
                            key="notification.group.mrWorkspace" />
     </extensions>
 
-    <!-- “文件夹”菜单：工具窗口头部里是动作组（子菜单）；快捷键 Alt＋F2 由具名动作弹出同一份列表。 -->
+    <!--
+        “文件夹”菜单：工具窗口头部里是动作组（子菜单）；快捷键 Alt＋F2 由具名动作弹出同一份列表。
+        图标由代码（MrWorkspaceIcons）提供，故这里不写 icon 属性——写了会覆盖代码里设的图标。
+    -->
     <actions>
         <action id="MrWorkspace.ShowFoldersMenu"
-                class="net.navifox.plugins.workspace.MrFoldersMenuAction"
-                icon="AllIcons.Nodes.Workspace">
+                class="net.navifox.plugins.workspace.MrFoldersMenuAction">
             <keyboard-shortcut keymap="$default" first-keystroke="alt F2" />
         </action>
 
-        <!--
-            主工具栏（New UI）左侧的小组件：紧跟在 Project Widget 之后，点开是与工具窗口头部一致的
-            “文件夹”列表，选中后激活工具窗口并过滤到该文件夹（New UI 的工具栏分组是 MainToolbarLeft）。
-        -->
         <action id="MrWorkspace.FoldersWidget"
-                class="net.navifox.plugins.workspace.MrWorkspaceFoldersWidgetAction"
-                icon="AllIcons.Nodes.Workspace">
+                class="net.navifox.plugins.workspace.MrWorkspaceFoldersWidgetAction">
             <add-to-group group-id="MainToolbarLeft" anchor="after" relative-to-action="main.toolbar.Project" />
         </action>
     </actions>

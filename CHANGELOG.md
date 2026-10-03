@@ -40,6 +40,7 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ### 变更
 
+- 面板图标、“文件夹”菜单图标与主工具栏小组件图标改用插件自带的一份 workspace 画法（折线取平台 sourceRoot 图标的文件夹边框色，浅色 `#3574F0`、深色 `#548AF7`）；小组件那份把文件夹内面置空（纯透明），面板与菜单保持有内面填充。插件 logo 未变；第三方图标的来源与许可现已登记在 `THIRD-PARTY-NOTICES.md`。
 - 插件显示名由 `Multi-Root Workspace View` 改为 `Multi-Root Workspace`：一并调整英文设置页标题（工具 → Multi-Root Workspace）、市场描述与中英 README 里的同类措辞；插件 ID 未变，已安装用户可照常升级。
 - 统一英文文案的句式大小写：设置页的复选框与“文件夹”菜单等条目改用句子式大写（如 “Hide the folder location”），与 IntelliJ 平台自身控件的写法一致；顺带修正一处提示文案引用了错误设置项名的问题。
 - **破坏性变更**：插件 ID 由 `net.navifox.plugins.multi-root-workspace-view` 改为 `net.navifox.plugins.mr-workspace`。IDE 会把二者视为两个不同的插件，升级前请先卸载旧插件再安装新版本，旧插件也不会再收到更新；构建产物名随之改为 `mr-workspace-<version>.zip`。
@@ -47,6 +48,7 @@ and this changelog follows the conventions of [Keep a Changelog](https://keepach
 
 ### Changed
 
+- The pane icon, the "Folders" menu icon and the main-toolbar widget icon now use a workspace glyph shipped with the plugin (its polyline takes the folder border color of the platform's sourceRoot icon — `#3574F0` in light themes, `#548AF7` in dark ones); the widget copy leaves the folder face empty (fully transparent), while the pane and menu copies keep it filled. The plugin logo is unchanged, and third-party icon sources and licenses are now documented in `THIRD-PARTY-NOTICES.md`.
 - The plugin display name changes from `Multi-Root Workspace View` to `Multi-Root Workspace`, along with the English settings page title (Tools -> Multi-Root Workspace), the marketplace description and the same wording in both READMEs. Its ID is unchanged, so existing installations upgrade as usual.
 - Unify English copy to sentence case: checkboxes on the settings page and entries such as the "Folders" menu now follow the capitalization used by IntelliJ Platform controls themselves (for example, "Hide the folder location"); a message that referenced a setting by the wrong name is fixed as well.
 - **Breaking change**: the plugin ID changes from `net.navifox.plugins.multi-root-workspace-view` to `net.navifox.plugins.mr-workspace`. IDEs treat the two as separate plugins, so uninstall the old plugin before installing this release, and the old plugin will no longer receive updates; the distribution file is renamed to `mr-workspace-<version>.zip` as well.
