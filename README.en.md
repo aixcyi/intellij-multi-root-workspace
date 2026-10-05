@@ -1,6 +1,6 @@
 # Multi-Root Workspace
 
-[中文](README.md) / English
+Supports: [中文](README.md) / English
 
 A JetBrains IDE plugin that renders a VS Code-style workspace inside the "Project" tool window (Alt+F1).
 
@@ -10,7 +10,6 @@ A JetBrains IDE plugin that renders a VS Code-style workspace inside the "Projec
 - Reads VS Code `.code-workspace` configuration files directly, and lets you switch between them in "Settings".
 - Feels and behaves like the native JetBrains IDE directory tree.
 - Adds a "Folders" widget to the left side of the main toolbar (New UI).
-- Supports multiple languages.
 
 ![Screenshot](preview.webp)
 

@@ -1,6 +1,6 @@
 # Multi-Root Workspace
 
-中文／[English](README.en.md)
+插件支持：中文／[English](README.en.md)／…
 
 一个 JetBrains IDE 插件，可以在“项目”工具窗口（Project，Alt+F1）中呈现像 VS Code 那样的工作区。
 
@@ -10,7 +10,6 @@
 - 直接依赖 VS Code 配置文件 `*.code-workspace` 并支持在“设置”中切换用哪个。
 - 拥有与 JetBrains IDE 原生目录树一致的体验。
 - 主工具栏（New UI）左侧提供“文件夹”小组件。
-- 支持多种语言文字。
 
 ![示意图](preview.webp)
 
