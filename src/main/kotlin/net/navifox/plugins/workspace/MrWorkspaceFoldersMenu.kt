@@ -81,7 +81,7 @@ internal class MrWorkspaceFoldersMenuData(
  * 选项文本里**不带**编号，平台按 `1` 至 `9`、`0`、`A`… 自动分配助记键。
  */
 internal class MrWorkspaceFoldersMenuAction : DefaultActionGroup(
-    NavifoxMessageBundle.message("MrWorkspacePane.folders"),
+    NavifoxMessageBundle.message("MrWorkspacePane.action.SwitchFolder.text"),
     true,
 ), DumbAware, ActionUpdateThreadAware {
 
@@ -122,8 +122,8 @@ internal class MrWorkspaceFoldersMenuAction : DefaultActionGroup(
  * 因此快捷键用这个具名动作，弹出的内容与头部子菜单那份 [folderMenuActions] 完全一致。
  */
 internal class MrFoldersMenuAction : DumbAwareAction(
-    NavifoxMessageBundle.message("MrWorkspacePane.folders"),
-    NavifoxMessageBundle.message("MrWorkspacePane.folders.description"),
+    NavifoxMessageBundle.message("MrWorkspacePane.action.SwitchFolder.text"),
+    NavifoxMessageBundle.message("MrWorkspacePane.action.SwitchFolder.description"),
     MrWorkspaceIcons.plugin,
 ), ActionUpdateThreadAware {
 
@@ -158,7 +158,7 @@ internal fun createFoldersPopup(
 ): JBPopup =
     JBPopupFactory.getInstance()
         .createActionGroupPopup(
-            NavifoxMessageBundle.message("MrWorkspacePane.folders"),
+            NavifoxMessageBundle.message("MrWorkspacePane.action.SwitchFolder.text"),
             DefaultActionGroup().apply { addAll(folderMenuActions(data, activateToolWindow)) },
             dataContext,
             // ALPHA_NUMBERING：与 Alt＋F1 同一套编号（1 至 9、0、A…），助记符由平台分配，项文本里不带编号。
@@ -183,7 +183,7 @@ private fun folderMenuActions(
     add(SelectionAction(
         project = data.project,
         key = MrWorkspaceFoldersMenuData.ALL_FOLDERS_KEY,
-        label = NavifoxMessageBundle.message("MrWorkspacePane.folders.showAll"),
+        label = NavifoxMessageBundle.message("MrWorkspace.ShowAllFolders"),
         activateToolWindow = activateToolWindow,
     ))
     // 一个文件夹都没有时（工作区没声明 folders，或全被“自动隐藏当前工作区目录”隐藏）不画分隔线。

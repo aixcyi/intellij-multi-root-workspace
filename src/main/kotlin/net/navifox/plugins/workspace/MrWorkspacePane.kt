@@ -231,11 +231,11 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         val box = JPanel().apply {
             isOpaque = false
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(JLabel(NavifoxMessageBundle.message("MrWorkspacePane.noConfigState.title")).apply {
+            add(JLabel(NavifoxMessageBundle.message("MrWorkspacePane.empty.NoAvailable")).apply {
                 alignmentX = Component.CENTER_ALIGNMENT
             })
             add(Box.createVerticalStrut(12))
-            add(JButton(NavifoxMessageBundle.message("MrWorkspacePane.noConfigState.create")).apply {
+            add(JButton(NavifoxMessageBundle.message("MrWorkspacePane.empty.button.CreateConfig")).apply {
                 alignmentX = Component.CENTER_ALIGNMENT
                 addActionListener {
                     if (!myProject.isDisposed) {
@@ -312,8 +312,8 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
         // “文件夹”子菜单排在“刷新”前面：展开后选一个顶层文件夹只看它，或选“显示所有文件夹”恢复。
         group.add(MrWorkspaceFoldersMenuAction())
         group.add(object : AnAction(
-            NavifoxMessageBundle.message("MrWorkspacePane.refresh"),
-            NavifoxMessageBundle.message("MrWorkspacePane.refresh.description"),
+            NavifoxMessageBundle.message("MrWorkspacePane.action.Refresh.text"),
+            NavifoxMessageBundle.message("MrWorkspacePane.action.Refresh.description"),
             AllIcons.Actions.Refresh,
         ) {
             override fun actionPerformed(e: AnActionEvent) {
@@ -401,9 +401,9 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
                 // 空工作区，或所有 folder 都被“自动隐藏当前工作区目录”隐藏。
                 showEmptyText(
                     if (folders.isEmpty()) {
-                        NavifoxMessageBundle.message("MrWorkspacePane.noFolders")
+                        NavifoxMessageBundle.message("MrWorkspacePane.empty.NothingDeclared")
                     } else {
-                        NavifoxMessageBundle.message("MrWorkspacePane.allFoldersHidden")
+                        NavifoxMessageBundle.message("MrWorkspacePane.empty.NoFoldersShown")
                     }
                 )
                 return emptyList()
@@ -673,13 +673,13 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
 
         val group = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
         val notification = group.createNotification(
-            NavifoxMessageBundle.message("MrWorkspacePane.notification.title"),
-            NavifoxMessageBundle.message("MrWorkspacePane.notification.content", files.size, chosen.name),
+            NavifoxMessageBundle.message("notification.MrWorkspace.MultipleConfigs.title"),
+            NavifoxMessageBundle.message("notification.MrWorkspace.MultipleConfigs.content", files.size, chosen.name),
             NotificationType.INFORMATION,
         )
         notification.addAction(
             NotificationAction.createSimple(
-                NavifoxMessageBundle.message("MrWorkspacePane.notification.action.settings")
+                NavifoxMessageBundle.message("notification.MrWorkspace.MultipleConfigs.action.GotoSettings")
             ) {
                 if (!myProject.isDisposed) {
                     openWorkspaceSettings(myProject)
@@ -687,7 +687,7 @@ class MrWorkspacePane(project: Project) : AbstractProjectViewPaneWithAsyncSuppor
             })
         notification.addAction(
             NotificationAction.createSimple(
-                NavifoxMessageBundle.message("MrWorkspacePane.notification.action.mute")
+                NavifoxMessageBundle.message("notification.MrWorkspace.MultipleConfigs.action.Mute")
             ) {
                 if (!myProject.isDisposed) {
                     getMrWorkspaceSettings(myProject).state.neverNotifyMultipleWorkspaceFiles = true

@@ -29,9 +29,9 @@ internal class MrWorkspaceFoldersWidgetAction : ExpandableComboAction(), DumbAwa
     init {
         // 动作自身的文案（与面板标题一致）：显示不出来时也会出现在“自定义工具栏”等平台界面里，
         // 不能为空，否则平台会报 “Empty menu item text”。
-        templatePresentation.text = NavifoxMessageBundle.message("MrWorkspacePane.folders")
+        templatePresentation.text = NavifoxMessageBundle.message("MrWorkspacePane.action.SwitchFolder.text")
         templatePresentation.description =
-            NavifoxMessageBundle.message("MrWorkspacePane.foldersWidget.description")
+            NavifoxMessageBundle.message("widget.MrWorkspace.description")
         templatePresentation.icon = MrWorkspaceIcons.widget
     }
 
@@ -55,11 +55,11 @@ internal class MrWorkspaceFoldersWidgetAction : ExpandableComboAction(), DumbAwa
         e.presentation.icon = MrWorkspaceIcons.widget
         e.presentation.setText(
             getMrWorkspaceFolderFilter(project).selectedFolderName
-                ?: NavifoxMessageBundle.message("MrWorkspacePane.foldersWidget.all"),
+                ?: NavifoxMessageBundle.message("widget.MrWorkspace.text.default"),
             false,
         )
         e.presentation.description =
-            NavifoxMessageBundle.message("MrWorkspacePane.foldersWidget.description")
+            NavifoxMessageBundle.message("widget.MrWorkspace.description")
     }
 
     /**

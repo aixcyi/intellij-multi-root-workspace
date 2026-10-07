@@ -138,7 +138,7 @@ private fun folderLeaf(project: Project, folder: MrFolder, resolved: File?): MrF
     val currentWorkspace = basePathKey != null && absolutePathKey(File(directory.path)) == basePathKey
     val locationText = when {
         !showFolderPath -> null
-        currentWorkspace -> NavifoxMessageBundle.message("MrWorkspacePane.topFolder.currentWorkspace")
+        currentWorkspace -> NavifoxMessageBundle.message("MrWorkspace.PathOfCurrentWorkspace")
         else -> relativeLocationText(project, directory)
     }
     return MrFolderLeaf(

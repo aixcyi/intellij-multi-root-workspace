@@ -31,7 +31,7 @@ class MrWorkspaceSettingsConfigurableTest : BasePlatformTestCase() {
         val component = configurable.createComponent()
         configurable.reset()
 
-        val key = "settings.tools.MrWorkspace.neverNotifyMultipleWorkspaceFiles"
+        val key = "settings.tools.MrWorkspace.check.NeverNotifyMultipleWorkspaceFiles"
         val checkBox = checkBox(component, key)
 
         assertFalse("默认不勾选", checkBox.isSelected)
@@ -56,8 +56,8 @@ class MrWorkspaceSettingsConfigurableTest : BasePlatformTestCase() {
         val component = configurable.createComponent()
         configurable.reset()
 
-        val hide = checkBox(component, "settings.tools.MrWorkspace.hideWorkspaceDirectory")
-        val forceShow = checkBox(component, "settings.tools.MrWorkspace.forceShowWorkspaceDirectory")
+        val hide = checkBox(component, "settings.tools.MrWorkspace.check.HideWorkspaceDirectory")
+        val forceShow = checkBox(component, "settings.tools.MrWorkspace.check.ForceShowWorkspaceDirectory")
 
         hide.isSelected = true
         assertTrue(hide.isSelected)

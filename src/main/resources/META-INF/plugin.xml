@@ -28,7 +28,7 @@
         <notificationGroup id="MrWorkspace"
                            displayType="BALLOON"
                            bundle="messages.NavifoxMessageBundle"
-                           key="notification.group.mrWorkspace" />
+                           key="notification.group.MrWorkspace" />
     </extensions>
 
     <!--

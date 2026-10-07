@@ -35,8 +35,8 @@ internal fun createWorkspaceConfig(project: Project, onCreated: (VirtualFile) ->
     val suggestedName = File(basePath).name + WORKSPACE_SUFFIX
 
     val descriptor = FileSaverDescriptor(
-        NavifoxMessageBundle.message("workspace.createConfig.dialog.title"),
-        NavifoxMessageBundle.message("workspace.createConfig.dialog.description"),
+        NavifoxMessageBundle.message("dialog.MrWorkspaceConfigCreator.title"),
+        NavifoxMessageBundle.message("dialog.MrWorkspaceConfigCreator.description"),
         WORKSPACE_SUFFIX.removePrefix("."),
     )
     val wrapper = FileChooserFactory.getInstance()
@@ -77,7 +77,7 @@ private fun writeTemplateIfNew(project: Project, target: File): VirtualFile? {
 
 /** 新文件模板：与 VS Code 一致只有单个根文件夹，name 随语言包本地化，保留尾逗号以便符合手工编辑习惯。 */
 private fun workspaceFileTemplate(): String {
-    val folderName = NavifoxMessageBundle.message("workspace.createConfig.folderName")
+    val folderName = NavifoxMessageBundle.message("MrWorkspace.DefaultConfigFolderName")
     return """{
     "folders": [
         { "name": "$folderName", "path": "./" },

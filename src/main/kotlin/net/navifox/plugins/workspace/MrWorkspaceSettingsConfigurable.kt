@@ -101,38 +101,38 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         fileCombo = combo
 
         val component = panel {
-            row(NavifoxMessageBundle.message("settings.tools.MrWorkspace.sourceLabel")) {
+            row(NavifoxMessageBundle.message("settings.tools.MrWorkspace.label.ConfigSource")) {
                 cell(combo)
                     .align(AlignX.FILL)
                     .resizableColumn()
                     .comment(
                         NavifoxMessageBundle.message(
-                            "settings.tools.MrWorkspace.sourceComment",
+                            "settings.tools.MrWorkspace.comment.ConfigSource",
                             VSCODE_WORKSPACES_DOC_URL,
                         )
                     )
             }
-            group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.display")) {
+            group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.Display")) {
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideWorkspaceDirectory"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.check.HideWorkspaceDirectory"))
                         .also { hideWorkspaceDirCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.forceShowWorkspaceDirectory"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.check.ForceShowWorkspaceDirectory"))
                         .also { forceShowWorkspaceDirCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFolderPath"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.check.HideFolderPath"))
                         .also { hideFolderPathCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.hideFoldersWidget"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.check.HideFoldersWidget"))
                         .also { hideFoldersWidgetCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
             }
-            group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.notification")) {
+            group(NavifoxMessageBundle.message("settings.tools.MrWorkspace.group.Notification")) {
                 row {
-                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.neverNotifyMultipleWorkspaceFiles"))
+                    checkBox(NavifoxMessageBundle.message("settings.tools.MrWorkspace.check.NeverNotifyMultipleWorkspaceFiles"))
                         .also { neverNotifyCheckBox = it.component }
                 }.layout(RowLayout.PARENT_GRID)
             }
@@ -213,7 +213,7 @@ class MrWorkspaceSettingsConfigurable(private val project: Project) : Searchable
         val files = findWorkspaceFiles(project)
         combo.removeAllItems()
         if (files.isEmpty()) {
-            combo.addItem(NavifoxMessageBundle.message("settings.tools.MrWorkspace.noConfigOption"))
+            combo.addItem(NavifoxMessageBundle.message("settings.tools.MrWorkspace.combo.empty.NoConfigs"))
             combo.selectedItem = combo.getItemAt(0)
         } else {
             files.forEach { combo.addItem(it.name) }
