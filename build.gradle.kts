@@ -13,9 +13,7 @@ dependencies {
     // IntelliJ 平台 Gradle 插件依赖
     // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
-        webstorm("2025.3.5")
-        // webstorm("2025.3.6.1")
-        // webstorm("2026.2.3")
+        webstorm(providers.gradleProperty("mrWorkspace.webstorm"))
         testFramework(TestFrameworkType.Platform)
 
         // 平台内置的 kotlinx-serialization-json：用于解析 *.code-workspace（JSONC）的注释与尾逗号。
@@ -33,8 +31,8 @@ intellijPlatform {
 
         // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html#intellijPlatform-pluginConfiguration-ideaVersion
         ideaVersion {
-            sinceBuild = "253"
-            untilBuild = "262.*"
+            sinceBuild = providers.gradleProperty("sinceBuild")
+            untilBuild = providers.gradleProperty("untilBuild")
         }
     }
 }
